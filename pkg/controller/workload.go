@@ -14,7 +14,7 @@ import (
 )
 
 func (c *Controller) PodCreatedOrUpdated(pod *corev1.Pod) error {
-	return c.processWorkload(pod, "po", "pod", "Pod")
+	return c.processWorkload(pod, "po", "pod", "Pod", "v1")
 }
 
 func (c *Controller) PodDeleted(pod *corev1.Pod) error {
@@ -29,9 +29,10 @@ func (c *Controller) NodeCreatedOrUpdated(node *corev1.Node) error {
 			Name:      node.Name,
 			Namespace: "kube-system",
 			OwnerReferences: []metav1.OwnerReference{{
-				Kind: "Node",
-				Name: node.GetName(),
-				UID:  node.GetUID(),
+				Kind:       "Node",
+				Name:       node.GetName(),
+				UID:        node.GetUID(),
+				APIVersion: "v1",
 			}},
 		},
 		Spec: icingav1.HostSpec{
@@ -57,9 +58,10 @@ func (c *Controller) NamespaceCreatedOrUpdated(namespace *corev1.Namespace) erro
 					// The hostgroup objects that represent Namespaces are all stored in kube-system.
 					Namespace: "kube-system",
 					OwnerReferences: []metav1.OwnerReference{{
-						Kind: "Namespace",
-						Name: namespace.GetName(),
-						UID:  namespace.GetUID(),
+						Kind:       "Namespace",
+						Name:       namespace.GetName(),
+						UID:        namespace.GetUID(),
+						APIVersion: "v1",
 					}},
 				},
 				Spec: icingav1.HostGroupSpec{
@@ -79,7 +81,7 @@ func (c *Controller) NamespaceDeleted(namespace *corev1.Namespace) error {
 }
 
 func (c *Controller) DeploymentCreatedOrUpdated(deployment *extensionsv1beta1.Deployment) error {
-	return c.processWorkload(deployment, "deploy", "deployment", "Deployment")
+	return c.processWorkload(deployment, "deploy", "deployment", "Deployment", "v1beta1")
 }
 
 func (c *Controller) DeploymentDeleted(deployment *extensionsv1beta1.Deployment) error {
@@ -88,7 +90,7 @@ func (c *Controller) DeploymentDeleted(deployment *extensionsv1beta1.Deployment)
 }
 
 func (c *Controller) DaemonSetCreatedOrUpdated(daemonset *extensionsv1beta1.DaemonSet) error {
-	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet")
+	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet", "v1beta1")
 }
 
 func (c *Controller) DaemonSetDeleted(daemonset *extensionsv1beta1.DaemonSet) error {
@@ -97,7 +99,7 @@ func (c *Controller) DaemonSetDeleted(daemonset *extensionsv1beta1.DaemonSet) er
 }
 
 func (c *Controller) ReplicaSetCreatedOrUpdated(replicaset *extensionsv1beta1.ReplicaSet) error {
-	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet")
+	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet", "v1beta1")
 }
 
 func (c *Controller) ReplicaSetDeleted(replicaset *extensionsv1beta1.ReplicaSet) error {
@@ -106,7 +108,7 @@ func (c *Controller) ReplicaSetDeleted(replicaset *extensionsv1beta1.ReplicaSet)
 }
 
 func (c *Controller) StatefulSetCreatedOrUpdated(statefulset *appsv1beta2.StatefulSet) error {
-	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet")
+	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1beta2")
 }
 
 func (c *Controller) StatefulSetDeleted(statefulset *appsv1beta2.StatefulSet) error {
@@ -114,25 +116,26 @@ func (c *Controller) StatefulSetDeleted(statefulset *appsv1beta2.StatefulSet) er
 	return c.deleteHost(statefulset.Namespace, "statefulset-"+statefulset.Name)
 }
 
-func (c *Controller) processWorkload(o metav1.Object, abbrev, typ, kind string) error {
+func (c *Controller) processWorkload(o metav1.Object, abbrev, typ, kind, apiVersion string) error {
 	log.Debugf("processing %s '%s/%s'", typ, o.GetNamespace(), o.GetName())
 	if !c.monitored(o) {
 		return c.deleteHost(o.GetNamespace(), fmt.Sprintf("%s-%s", abbrev, o.GetName()))
 	} else {
-		return c.reconcileHost(c.hostForWorkload(o, abbrev, typ, kind))
+		return c.reconcileHost(c.hostForWorkload(o, abbrev, typ, kind, apiVersion))
 	}
 }
 
 // Create a generic Host object for workloads
-func (c *Controller) hostForWorkload(o metav1.Object, abbrev, typ, kind string) *icingav1.Host {
+func (c *Controller) hostForWorkload(o metav1.Object, abbrev, typ, kind, apiVersion string) *icingav1.Host {
 	h := &icingav1.Host{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", abbrev, o.GetName()),
 			Namespace: o.GetNamespace(),
 			OwnerReferences: []metav1.OwnerReference{{
-				Kind: kind,
-				Name: o.GetName(),
-				UID:  o.GetUID(),
+				Kind:       kind,
+				Name:       o.GetName(),
+				UID:        o.GetUID(),
+				APIVersion: apiVersion,
 			}},
 		},
 		Spec: icingav1.HostSpec{
