@@ -1,0 +1,88 @@
+package: main
+imports: |
+  "github.com/Nexinto/go-icinga2-client/icinga2"
+controllerextra: |
+  Icinga icinga2.Client
+  Tag string
+  DefaultVars map[string]string
+clientsets:
+- name: kubernetes
+  defaultresync: 30
+  apis:
+  - name: core
+    version: v1
+    resources:
+    - name: Pod
+      plural: Pods
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+    - name: Node
+      plural: Nodes
+      scope: Cluster
+      create: true
+      update: true
+      delete: true
+    - name: Namespace
+      plural: Namespaces
+      scope: Cluster
+      create: true
+      update: true
+      delete: true
+  - name: extensions
+    version: v1beta1
+    resources:
+    - name: Deployment
+      plural: Deployments
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+    - name: DaemonSet
+      plural: DaemonSets
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+    - name: ReplicaSet
+      plural: ReplicaSets
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+  - name: apps
+    version: v1beta2
+    resources:
+    - name: StatefulSet
+      plural: StatefulSets
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+- name: icinga
+  import: github.com/Nexinto/kubernetes-icinga
+  defaultresync: 30
+  apis:
+  - name: icinga
+    version: v1
+    group: icinga.nexinto.com
+    resources:
+    - name: HostGroup
+      plural: HostGroups
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+    - name: Host
+      plural: Hosts
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true
+    - name: Check
+      plural: Checks
+      scope: Namespaced
+      create: true
+      update: true
+      delete: true

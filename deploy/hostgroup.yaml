@@ -1,0 +1,7 @@
+---
+apiVersion: icinga.nexinto.com/v1
+kind: HostGroup
+metadata:
+  name: webservers
+spec:
+  name: webservers

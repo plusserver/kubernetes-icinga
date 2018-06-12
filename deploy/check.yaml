@@ -1,0 +1,12 @@
+---
+apiVersion: icinga.nexinto.com/v1
+kind: Check
+metadata:
+  name: webcheck
+spec:
+  name: webcheck
+  host: www.mysite.com
+  checkcommand: http
+  vars:
+    http_address: www.mysite.com
+    http_uri: /health

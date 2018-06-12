@@ -1,0 +1,3 @@
+- image: kubernetes-icinga
+  path: /
+  public: true
