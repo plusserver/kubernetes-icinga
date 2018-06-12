@@ -12,11 +12,12 @@ import (
 func (c *Controller) reconcileHostGroup(hostgroup *icingav1.HostGroup) error {
 	ohg, err := c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).Get(hostgroup.Name, metav1.GetOptions{})
 	if err == nil {
-		if metadataDiffer(hostgroup, ohg) || strmapsDiffer(hostgroup.Spec.Vars, ohg.Spec.Vars) || hostgroup.Spec.Name != ohg.Spec.Name {
-			log.Infof("updating hostgroup '%s/%s'", hostgroup.Namespace, hostgroup.Name)
-			_, err := c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).Update(hostgroup)
+		if !reflect.DeepEqual(ohg.Spec, hostgroup.Spec) {
+			hostgroup.Spec.DeepCopyInto(&ohg.Spec)
+			log.Infof("updating hostgroup '%s/%s'", ohg.Namespace, ohg.Name)
+			_, err := c.IcingaClient.IcingaV1().HostGroups(ohg.Namespace).Update(ohg)
 			if err != nil {
-				log.Errorf("error updating hostgroup '%s/%s': %s", hostgroup.Namespace, hostgroup.Name, err.Error())
+				log.Errorf("error updating hostgroup '%s/%s': %s", ohg.Namespace, ohg.Name, err.Error())
 				return err
 			}
 		}
@@ -56,7 +57,7 @@ func (c *Controller) reconcileHost(host *icingav1.Host) error {
 			log.Infof("updating host '%s/%s'", oh.Namespace, oh.Name)
 			_, err := c.IcingaClient.IcingaV1().Hosts(oh.Namespace).Update(oh)
 			if err != nil {
-				log.Errorf("error updating host '%s/%s': %s", host.Namespace, host.Name, err.Error())
+				log.Errorf("error updating host '%s/%s': %s", oh.Namespace, oh.Name, err.Error())
 				return err
 			}
 		}
@@ -91,11 +92,12 @@ func (c *Controller) deleteHost(namespace, name string) error {
 func (c *Controller) reconcileCheck(check *icingav1.Check) error {
 	oc, err := c.IcingaClient.IcingaV1().Checks(check.Namespace).Get(check.Name, metav1.GetOptions{})
 	if err == nil {
-		if metadataDiffer(check, oc) || !reflect.DeepEqual(check.Spec, oc.Spec) {
-			log.Infof("updating check '%s/%s'", check.Namespace, check.Name)
-			_, err := c.IcingaClient.IcingaV1().Checks(check.Namespace).Update(check)
+		if !reflect.DeepEqual(check.Spec, oc.Spec) {
+			check.Spec.DeepCopyInto(&oc.Spec)
+			log.Infof("updating check '%s/%s'", oc.Namespace, oc.Name)
+			_, err := c.IcingaClient.IcingaV1().Checks(oc.Namespace).Update(oc)
 			if err != nil {
-				log.Errorf("error updating check '%s/%s': %s", check.Namespace, check.Name, err.Error())
+				log.Errorf("error updating check '%s/%s': %s", oc.Namespace, oc.Name, err.Error())
 				return err
 			}
 		}

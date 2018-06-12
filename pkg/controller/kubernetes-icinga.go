@@ -2,15 +2,16 @@ package main
 
 import (
 	"flag"
-	log "github.com/sirupsen/logrus"
 	"os"
 
-	"github.com/Nexinto/go-icinga2-client/icinga2"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/Nexinto/go-icinga2-client/icinga2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
 	icingaclientset "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -69,11 +70,21 @@ func main() {
 		panic(err.Error())
 	}
 
+	var defaultVars map[string]string
+
+	if e := os.Getenv("DEFAULT_VARS"); e != "" {
+		err := yaml.Unmarshal([]byte(e), &defaultVars)
+		if err != nil {
+			panic("error parsing DEFAULT_VARS: " + err.Error())
+		}
+	}
+
 	c := &Controller{
 		Kubernetes:   kubernetesclient,
 		IcingaClient: icingaclient,
 		Icinga:       icingaApi,
 		Tag:          tag,
+		DefaultVars:  defaultVars,
 	}
 
 	c.Initialize()
