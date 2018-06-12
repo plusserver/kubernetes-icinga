@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-icinga
+  namespace: kube-system
+data:
+  LOG_LEVEL: debug
+  TAG: kubernetes
+  ICINGA_URL: ...
+  ICINGA_DEBUG: "false"
+  DEFAULT_VARS: "{}"

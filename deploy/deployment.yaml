@@ -1,0 +1,59 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kubernetes-icinga
+  labels:
+    app: kubernetes-icinga
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-icinga
+  template:
+    metadata:
+      labels:
+        app: kubernetes-icinga
+    spec:
+      serviceAccountName: kubernetes-icinga
+      containers:
+      - name: kubernetes-icinga
+        image: nexinto/kubernetes-icinga:latest
+        imagePullPolicy: Always
+        env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: LOG_LEVEL
+        - name: TAG
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: TAG
+        - name: DEFAULT_VARS
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: DEFAULT_VARS
+        - name: ICINGA_URL
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: ICINGA_URL
+        - name: ICINGA_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: ICINGA_DEBUG
+        - name: ICINGA_USER
+          valueFrom:
+            secretKeyRef:
+              name: kubernetes-icinga
+              key: ICINGA_USER
+        - name: ICINGA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kubernetes-icinga
+              key: ICINGA_PASSWORD
