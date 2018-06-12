@@ -95,7 +95,7 @@ func (c *Controller) Initialize() {
 	if c.Kubernetes == nil {
 		panic("c.Kubernetes is nil")
 	}
-	c.KubernetesFactory = kubernetesinformers.NewSharedInformerFactory(c.Kubernetes, time.Second*30)
+	c.KubernetesFactory = kubernetesinformers.NewSharedInformerFactory(c.Kubernetes, time.Second*300)
 
 	PodInformer := c.KubernetesFactory.Core().V1().Pods()
 	PodQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
@@ -408,7 +408,7 @@ func (c *Controller) Initialize() {
 	if c.IcingaClient == nil {
 		panic("c.IcingaClient is nil")
 	}
-	c.IcingaFactory = icingainformers.NewSharedInformerFactory(c.IcingaClient, time.Second*30)
+	c.IcingaFactory = icingainformers.NewSharedInformerFactory(c.IcingaClient, time.Second*300)
 
 	HostGroupInformer := c.IcingaFactory.Icinga().V1().HostGroups()
 	HostGroupQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())

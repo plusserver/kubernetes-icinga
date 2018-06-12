@@ -7,7 +7,7 @@ controllerextra: |
   DefaultVars map[string]string
 clientsets:
 - name: kubernetes
-  defaultresync: 30
+  defaultresync: 300
   apis:
   - name: core
     version: v1
@@ -62,7 +62,7 @@ clientsets:
       delete: true
 - name: icinga
   import: github.com/Nexinto/kubernetes-icinga
-  defaultresync: 30
+  defaultresync: 300
   apis:
   - name: icinga
     version: v1
