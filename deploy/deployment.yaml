@@ -32,6 +32,11 @@ spec:
             configMapKeyRef:
               name: kubernetes-icinga
               key: TAG
+        - name: MAPPING
+          valueFrom:
+            configMapKeyRef:
+              name: kubernetes-icinga
+              key: MAPPING
         - name: DEFAULT_VARS
           valueFrom:
             configMapKeyRef:

@@ -25,4 +25,6 @@ const (
 
 	// NotesURL
 	AnnNotesURL = "icinga.nexinto.com/notesurl"
+
+	EMPTY = "<EMPTY>"
 )

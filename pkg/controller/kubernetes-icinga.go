@@ -87,7 +87,20 @@ func main() {
 		DefaultVars:  defaultVars,
 	}
 
+	switch os.Getenv("MAPPING") {
+	case "hostgroup":
+		c.Mapping = &HostGroupMapping{}
+	case "host":
+		c.Mapping = &HostMapping{}
+	default:
+		c.Mapping = &HostGroupMapping{}
+	}
+
 	c.Initialize()
+
+	if err := c.Mapping.MonitorCluster(c); err != nil {
+		log.Errorf("error setting up monitoring for the cluster: %s", err.Error())
+	}
 
 	go c.RefreshComponentStatutes()
 	go c.EnsureDefaultHostgroups()

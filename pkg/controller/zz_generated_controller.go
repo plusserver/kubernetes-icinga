@@ -87,6 +87,7 @@ type Controller struct {
 	Icinga      icinga2.Client
 	Tag         string
 	DefaultVars map[string]string
+	Mapping     Mapping
 }
 
 // Expects the clientsets to be set.

@@ -22,34 +22,8 @@ func (c *Controller) MakeVars(o metav1.Object, typ string, namespaced bool) map[
 	return mergeVars(c.DefaultVars, map[string]string{VarName: o.GetName(), VarType: typ, VarCluster: c.Tag, VarNamespace: nsvar})
 }
 
-func strmapsDiffer(a map[string]string, b map[string]string) bool {
-	return !reflect.DeepEqual(a, b)
-}
-
 func varsDiffer(a icinga2.Vars, b icinga2.Vars) bool {
 	return !reflect.DeepEqual(a, b)
-}
-
-func metadataDiffer(a metav1.Object, b metav1.Object) bool {
-	if a.GetName() != b.GetName() || a.GetNamespace() != b.GetNamespace() || !reflect.DeepEqual(a.GetLabels(), b.GetLabels()) {
-		return true
-	}
-
-	if len(a.GetAnnotations()) != len(b.GetAnnotations()) {
-		return true
-	}
-
-	for k, v := range a.GetAnnotations() {
-		if k == "kubectl.kubernetes.io/last-applied-configuration" {
-			continue
-		}
-
-		if b.GetAnnotations()[k] != v {
-			return true
-		}
-	}
-
-	return false
 }
 
 func mergeVars(maps ...interface{}) map[string]string {
@@ -134,4 +108,33 @@ func MakeEvent(kube kubernetes.Interface, o metav1.Object, message, kind string,
 
 	_, err := kube.CoreV1().Events(o.GetNamespace()).Create(event)
 	return err
+}
+
+func MakeOwnerRef(o metav1.Object, ownerKind, ownerApiVersion string) []metav1.OwnerReference {
+	return []metav1.OwnerReference{{
+		Kind:       ownerKind,
+		Name:       o.GetName(),
+		UID:        o.GetUID(),
+		APIVersion: ownerApiVersion,
+	}}
+}
+
+func MakeObjectMeta(o metav1.Object, ownerKind, ownerApiVersion, objectAbbrev string, system bool) metav1.ObjectMeta {
+	var namespace string
+	if system {
+		namespace = "kube-system"
+	} else {
+		namespace = o.GetNamespace()
+	}
+
+	name := o.GetName()
+	if objectAbbrev != "" {
+		name = objectAbbrev + "-" + name
+	}
+
+	return metav1.ObjectMeta{
+		Name:            name,
+		Namespace:       namespace,
+		OwnerReferences: MakeOwnerRef(o, ownerKind, ownerApiVersion),
+	}
 }

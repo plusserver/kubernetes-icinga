@@ -9,4 +9,5 @@ data:
   TAG: kubernetes
   ICINGA_URL: ...
   ICINGA_DEBUG: "false"
+  MAPPING: hostgroup
   DEFAULT_VARS: "{}"

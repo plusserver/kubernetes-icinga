@@ -5,7 +5,7 @@ kubernetes-icinga uses Icinga2 to monitor Kubernetes workload and infrastructure
 ## Overview
 
 kubernetes-icinga watches infrastructure and workload deployed in a Kubernetes cluster and creates
-resources in Icinga to monitor those. Each namespace is represented by a Icinga Hostgroup with two
+resources in Icinga to monitor those. By default, each namespace is represented by a Icinga Hostgroup with two
 additional Hostgroups created for Nodes and Infrastructure. Each infrastructure element and workload
 is represented by an Icinga host with a check that monitors the state of the object through the
 Kubernetes API.
@@ -58,6 +58,34 @@ the object to some string. Set this on a Namespace and all objects in that names
 Set the annotations `icinga.nexinto.com/notes` and `icinga.nexinto.com/notesurl` on any Kubernetes object
 to create Notes and Notes URL fields in the corresponding Icinga Host.
 
+## Resource mapping
+
+There are two methods of mapping Kubernetes resources to Icinga Objects: "hostgroup" and "host".
+To choose one of the methods, set the `MAPPING` configuration parameter.
+
+If you want to change your mapping method later, you will have to manually delete all `hostgroup`,
+`host` and `check` objects created by kubernetes-icinga from your Kubernetes cluster.
+
+### Hostgroup mapping
+
+With Hostgroup mapping, the default,
+* namespaces are created as Icinga Hostgroups, all prefixed with the `TAG` parameter
+* two additional Hostgroups are created for the Kubernetes nodes and the infrastructure elements.
+* Each workload is created as a host
+
+This method will create multiple hostgroups per cluster, but it is possible to add additional service
+checks for Kubernetes workload.
+
+### Host mapping
+
+With Host mapping,
+* a single hostgroup is created for the cluster; it's name will be the `TAG` parameter
+* Kubernetes namespaces and the two additional groups for nodes and infrastructure are created as Hosts
+* Each piece of workload is a service check added to the host that represents the namespace.
+
+This will create a simpler structure in Icinga, but you cannot easily add additional service checks for your
+workload.
+
 ## Custom resources
 
 Icinga Hostgroups, Hosts and Checks ("Services") are represented by custom resources. See
@@ -80,5 +108,6 @@ All configuration parameters are passed to the controller as environment variabl
 |ICINGA_USER|Icinga API user||
 |ICINGA_PASSWORD|Icinga API user password||
 |TAG|Unique name for your Cluster. Prefixes all Icinga resources created|kubernetes|
+|MAPPING|Resource mapping (hostgroup, host)|hostgroup|
 |ICINGA_DEBUG|Set to something to dump Icinga API requests/responses|""|
 |DEFAULT_VARS|A YAML map with Icinga Vars to add|""|

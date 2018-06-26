@@ -15,7 +15,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 	owner := fmt.Sprintf("%s/%s", hostgroup.Namespace, hostgroup.Name)
 	log.Debugf("processing hostgroup '%s'", owner)
 	newHg := icinga2.HostGroup{
-		Name: c.Tag + "." + hostgroup.Spec.Name,
+		Name: c.Tag + empty(hostgroup.Spec.Name),
 		Vars: Vars(mergeVars(c.DefaultVars, hostgroup.Spec.Vars, map[string]string{VarCluster: c.Tag, VarOwner: owner})),
 	}
 	hg, err := c.Icinga.GetHostGroup(newHg.Name)
@@ -50,7 +50,9 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 func (c *Controller) HostGroupDeleted(hostgroup *icingav1.HostGroup) error {
 	log.Debugf("processing deleted hostgroup '%s/%s'", hostgroup.Namespace, hostgroup.Name)
 
-	ohg, err := c.Icinga.GetHostGroup(c.Tag + "." + hostgroup.Spec.Name)
+	hgName := c.Tag + empty(hostgroup.Spec.Name)
+
+	ohg, err := c.Icinga.GetHostGroup(hgName)
 	if err != nil {
 		return nil
 	}
@@ -59,10 +61,10 @@ func (c *Controller) HostGroupDeleted(hostgroup *icingav1.HostGroup) error {
 		log.Debugf("cannot delete hostgroup '%s': it is not managed by us ('%s')", ohg.Name, ohg.Vars[VarCluster])
 	}
 
-	log.Infof("deleting icinga hostgroup '%s'", c.Tag+"."+hostgroup.Spec.Name)
-	err = c.Icinga.DeleteHostGroup(c.Tag + "." + hostgroup.Spec.Name)
+	log.Infof("deleting icinga hostgroup '%s'", hgName)
+	err = c.Icinga.DeleteHostGroup(hgName)
 	if err != nil {
-		log.Errorf("error deleting icinga hostgroup '%s'", c.Tag+"."+hostgroup.Spec.Name, err.Error())
+		log.Errorf("error deleting icinga hostgroup '%s'", hgName, err.Error())
 		return err
 	}
 
@@ -75,11 +77,11 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 
 	hostgroups := make([]string, len(host.Spec.Hostgroups))
 	for i, hg := range host.Spec.Hostgroups {
-		hostgroups[i] = c.Tag + "." + hg
+		hostgroups[i] = c.Tag + empty(hg)
 	}
 
 	ih := icinga2.Host{
-		Name:         c.Tag + "." + host.Spec.Name,
+		Name:         c.Tag + empty(host.Spec.Name),
 		Groups:       hostgroups,
 		CheckCommand: host.Spec.CheckCommand,
 		Vars:         Vars(mergeVars(c.DefaultVars, host.Spec.Vars, map[string]string{VarCluster: c.Tag, VarOwner: owner})),
@@ -130,7 +132,9 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 func (c *Controller) HostDeleted(host *icingav1.Host) error {
 	log.Debugf("processing deleted host '%s/%s'", host.Namespace, host.Name)
 
-	oh, err := c.Icinga.GetHost(c.Tag + "." + host.Spec.Name)
+	hName := c.Tag + empty(host.Spec.Name)
+
+	oh, err := c.Icinga.GetHost(hName)
 	if err != nil {
 		return nil
 	}
@@ -139,10 +143,10 @@ func (c *Controller) HostDeleted(host *icingav1.Host) error {
 		log.Debugf("cannot delete host '%s': it is not managed by us ('%s')", oh.Name, oh.Vars[VarCluster])
 	}
 
-	log.Infof("deleting icinga host '%s'", c.Tag+"."+host.Spec.Name)
-	err = c.Icinga.DeleteHost(c.Tag + "." + host.Spec.Name)
+	log.Infof("deleting icinga host '%s'", hName)
+	err = c.Icinga.DeleteHost(hName)
 	if err != nil {
-		log.Errorf("error deleting icinga host '%s'", c.Tag+"."+host.Spec.Name, err.Error())
+		log.Errorf("error deleting icinga host '%s'", hName, err.Error())
 		return err
 	}
 
@@ -213,4 +217,12 @@ func (c *Controller) CheckDeleted(check *icingav1.Check) error {
 	}
 
 	return nil
+}
+
+func empty(a string) string {
+	if a == EMPTY {
+		return ""
+	} else {
+		return "." + a
+	}
 }

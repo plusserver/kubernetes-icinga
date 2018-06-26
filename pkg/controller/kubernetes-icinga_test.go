@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	log "github.com/sirupsen/logrus"
 
@@ -21,8 +22,44 @@ import (
 	icingafake "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned/fake"
 )
 
+type KubernetesIcingaTestSuite struct {
+	suite.Suite
+	Controller   *Controller
+	Mapping      Mapping
+	GetContainer func(s *KubernetesIcingaTestSuite, name string) (icinga2.Object, error)
+	GetCheckable func(s *KubernetesIcingaTestSuite, container, name string) (icinga2.Checkable, error)
+}
+
+func TestHostGroupMapping(t *testing.T) {
+	suite.Run(t, &KubernetesIcingaTestSuite{
+		Mapping: &HostGroupMapping{},
+		GetContainer: func(s *KubernetesIcingaTestSuite, name string) (icinga2.Object, error) {
+			return s.Controller.Icinga.GetHostGroup(name)
+		},
+		GetCheckable: func(s *KubernetesIcingaTestSuite, container, name string) (icinga2.Checkable, error) {
+			return s.Controller.Icinga.GetHost(container + "." + name)
+		},
+	})
+}
+
+func TestHostMapping(t *testing.T) {
+	suite.Run(t, &KubernetesIcingaTestSuite{
+		Mapping: &HostMapping{},
+		GetContainer: func(s *KubernetesIcingaTestSuite, name string) (icinga2.Object, error) {
+			return s.Controller.Icinga.GetHost(name)
+		},
+		GetCheckable: func(s *KubernetesIcingaTestSuite, container, name string) (icinga2.Checkable, error) {
+			return s.Controller.Icinga.GetService(container + "!" + name)
+		},
+	})
+}
+
+func (s *KubernetesIcingaTestSuite) SetupTest() {
+	s.Controller = testEnvironment(s.Mapping)
+}
+
 // Create a test environment with some useful defaults.
-func testEnvironment() *Controller {
+func testEnvironment(mapping Mapping) *Controller {
 
 	log.SetLevel(log.InfoLevel)
 
@@ -31,6 +68,7 @@ func testEnvironment() *Controller {
 		IcingaClient: icingafake.NewSimpleClientset(),
 		Icinga:       icinga2.NewMockClient(),
 		Tag:          "testing",
+		Mapping:      mapping,
 	}
 
 	c.Kubernetes.CoreV1().Namespaces().Create(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}})
@@ -65,9 +103,9 @@ func (c *Controller) simulate() error {
 	return nil
 }
 
-func TestDefaultCase(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestDefaultCase() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	c.Kubernetes.CoreV1().Nodes().Create(&corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{Name: "node1"},
@@ -80,57 +118,51 @@ func TestDefaultCase(t *testing.T) {
 		return
 	}
 
-	hg, err := c.Icinga.GetHostGroup("testing.default")
+	def, err := s.GetContainer(s, "testing.default")
+
 	if !a.Nil(err) {
 		return
 	}
-	if !a.NotNil(hg) {
+	if !a.NotNil(def) {
 		return
 	}
 
-	a.Equal("testing", hg.Vars[VarCluster])
+	a.Equal("testing", def.GetVars()[VarCluster])
 
-	if _, err := c.Icinga.GetHostGroup("testing.infrastructure"); !a.Nil(err) {
+	if _, err := s.GetContainer(s, "testing.infrastructure"); !a.Nil(err) {
 		return
 	}
-	if _, err := c.Icinga.GetHostGroup("testing.nodes"); !a.Nil(err) {
+	if _, err := s.GetContainer(s, "testing.nodes"); !a.Nil(err) {
 		return
 	}
-
-	// Test the intermediate custom resource
-	n, err := c.IcingaClient.IcingaV1().Hosts("kube-system").Get("node1", metav1.GetOptions{})
-	if !a.Nil(err) {
-		return
-	}
-	a.Equal("node1", n.Name)
-	a.Equal("nodes.node1", n.Spec.Name)
-	a.Equal([]string{"nodes"}, n.Spec.Hostgroups)
-	a.Equal("check_kubernetes", n.Spec.CheckCommand)
-	a.Equal(1, len(n.OwnerReferences))
 
 	// Test the resulting icinga host
-	node1, err := c.Icinga.GetHost("testing.nodes.node1")
+	node1, err := s.GetCheckable(s, "testing.nodes", "node1")
 	if !a.Nil(err) {
 		return
 	}
 	if !a.NotNil(node1) {
 		return
 	}
-	a.Equal("check_kubernetes", node1.CheckCommand)
-	a.Equal("testing", node1.Vars[VarCluster])
-	a.Equal("node", node1.Vars[VarType])
-	a.Equal("node1", node1.Vars[VarName])
-	a.Equal("", node1.Vars[VarNamespace])
-	a.Equal("kube-system/node1", node1.Vars[VarOwner])
-	if !a.Equal(1, len(node1.Groups)) {
-		return
+	a.Equal("check_kubernetes", node1.GetCheckCommand())
+	a.Equal("testing", node1.GetVars()[VarCluster])
+	a.Equal("node", node1.GetVars()[VarType])
+	a.Equal("node1", node1.GetVars()[VarName])
+	a.Equal("", node1.GetVars()[VarNamespace])
+	a.Equal("kube-system/node1", node1.GetVars()[VarOwner])
+
+	switch node1.(type) {
+	case icinga2.Host:
+		if !a.Equal(1, len(node1.(icinga2.Host).Groups)) {
+			return
+		}
+		a.Equal("testing.nodes", node1.(icinga2.Host).Groups[0])
 	}
-	a.Equal("testing.nodes", node1.Groups[0])
 }
 
-func TestDoNotTouchSomeoneElsesHostgroup(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestDoNotTouchSomeoneElsesHostgroup() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	err := c.Icinga.CreateHostGroup(icinga2.HostGroup{Name: "testing.default", Vars: icinga2.Vars{VarCluster: "someone"}})
 	if !a.Nil(err) {
@@ -145,12 +177,12 @@ func TestDoNotTouchSomeoneElsesHostgroup(t *testing.T) {
 	if !a.Nil(err) {
 		return
 	}
-	a.Equal("someone", hg.Vars[VarCluster])
+	a.Equal("someone", hg.GetVars()[VarCluster])
 }
 
-func TestNamespace(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestNamespace() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	c.Kubernetes.CoreV1().Namespaces().Create(
 		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "dev"}})
@@ -162,17 +194,17 @@ func TestNamespace(t *testing.T) {
 		return
 	}
 
-	dev, err := c.Icinga.GetHostGroup("testing.dev")
+	dev, err := s.GetContainer(s, "testing.dev")
 	if !a.Nil(err) {
 		return
 	}
-	a.Equal("testing", dev.Vars[VarCluster])
-	a.Equal("namespace", dev.Vars[VarType])
-	a.Equal("dev", dev.Vars[VarName])
-	a.Equal("", dev.Vars[VarNamespace])
-	a.Equal("kube-system/dev", dev.Vars[VarOwner])
+	a.Equal("testing", dev.GetVars()[VarCluster])
+	a.Equal("namespace", dev.GetVars()[VarType])
+	a.Equal("dev", dev.GetVars()[VarName])
+	a.Equal("", dev.GetVars()[VarNamespace])
+	a.Equal("kube-system/dev", dev.GetVars()[VarOwner])
 
-	if _, err := c.Icinga.GetHostGroup("testing.test"); !a.Nil(err) {
+	if _, err := s.GetContainer(s, "testing.test"); !a.Nil(err) {
 		return
 	}
 
@@ -186,18 +218,18 @@ func TestNamespace(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHostGroup("testing.test"); !a.NotNil(err) {
+	if _, err := s.GetContainer(s, "testing.test"); !a.NotNil(err) {
 		return
 	}
-	if _, err := c.Icinga.GetHostGroup("testing.prod"); !a.Nil(err) {
+	if _, err := s.GetContainer(s, "testing.prod"); !a.Nil(err) {
 		return
 	}
 }
 
 // Standalone pods are monitored as icinga hosts.
-func TestPod(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestPod() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	// Create a standalone pod and a pod that looks like it was created by a Deployment.
 	c.Kubernetes.CoreV1().Pods("default").Create(&corev1.Pod{
@@ -216,16 +248,16 @@ func TestPod(t *testing.T) {
 		return
 	}
 
-	h, err := c.Icinga.GetHost("testing.default.po-standalone")
+	h, err := s.GetCheckable(s, "testing.default", "po-standalone")
 	a.Nil(err)
-	a.Equal("check_kubernetes", h.CheckCommand)
-	a.Equal("testing", h.Vars[VarCluster])
-	a.Equal("pod", h.Vars[VarType])
-	a.Equal("default", h.Vars[VarNamespace])
-	a.Equal("standalone", h.Vars[VarName])
-	a.Equal("default/po-standalone", h.Vars[VarOwner])
+	a.Equal("check_kubernetes", h.GetCheckCommand())
+	a.Equal("testing", h.GetVars()[VarCluster])
+	a.Equal("pod", h.GetVars()[VarType])
+	a.Equal("default", h.GetVars()[VarNamespace])
+	a.Equal("standalone", h.GetVars()[VarName])
+	a.Equal("default/po-standalone", h.GetVars()[VarOwner])
 
-	_, err = c.Icinga.GetHost("testing.default.po-deployed")
+	_, err = s.GetCheckable(s, "testing.default", "po-deployed")
 	a.NotNil(err)
 
 	// Add a second standalone pod
@@ -236,13 +268,13 @@ func TestPod(t *testing.T) {
 		return
 	}
 
-	h, err = c.Icinga.GetHost("testing.default.po-standalone2")
+	h, err = s.GetCheckable(s, "testing.default", "po-standalone2")
 	a.Nil(err)
-	a.Equal("check_kubernetes", h.CheckCommand)
-	a.Equal("testing", h.Vars[VarCluster])
-	a.Equal("pod", h.Vars[VarType])
-	a.Equal("default", h.Vars[VarNamespace])
-	a.Equal("standalone2", h.Vars[VarName])
+	a.Equal("check_kubernetes", h.GetCheckCommand())
+	a.Equal("testing", h.GetVars()[VarCluster])
+	a.Equal("pod", h.GetVars()[VarType])
+	a.Equal("default", h.GetVars()[VarNamespace])
+	a.Equal("standalone2", h.GetVars()[VarName])
 
 	// Delete the first pod
 	c.Kubernetes.CoreV1().Pods("default").Delete("standalone", &metav1.DeleteOptions{})
@@ -251,17 +283,17 @@ func TestPod(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.po-standalone"); a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "po-standalone"); a.NotNil(err) {
 		return
 	}
-	if _, err := c.Icinga.GetHost("testing.default.po-standalone2"); a.Nil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "po-standalone2"); a.Nil(err) {
 		return
 	}
 }
 
-func TestDeployment(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestDeployment() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -308,27 +340,27 @@ func TestDeployment(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.deploy-controlled"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "deploy-controlled"); !a.NotNil(err) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.deploy-unmonitored"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "deploy-unmonitored"); !a.NotNil(err) {
 		return
 	}
 
-	host, err := c.Icinga.GetHost("testing.default.deploy-mydeploy")
+	host, err := s.GetCheckable(s, "testing.default", "deploy-mydeploy")
 	if !a.Nil(err) {
 		return
 	}
-	a.Equal("a nice deployment", host.Notes)
-	a.Equal("http://site.com/docs", host.NotesURL)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("mydeploy", host.Vars[VarName])
-	a.Equal("deployment", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/deploy-mydeploy", host.Vars[VarOwner])
+	a.Equal("a nice deployment", host.GetNotes())
+	a.Equal("http://site.com/docs", host.GetNotesURL())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("mydeploy", host.GetVars()[VarName])
+	a.Equal("deployment", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/deploy-mydeploy", host.GetVars()[VarOwner])
 
 	if err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Delete("mydeploy", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
@@ -338,14 +370,14 @@ func TestDeployment(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.deploy-mydeploy"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "deploy-mydeploy"); !a.NotNil(err) {
 		return
 	}
 }
 
-func TestDaemonSet(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestDaemonSet() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.ExtensionsV1beta1().DaemonSets("default").Create(&extensionsv1beta1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -361,18 +393,18 @@ func TestDaemonSet(t *testing.T) {
 		return
 	}
 
-	host, err := c.Icinga.GetHost("testing.default.ds-myds")
+	host, err := s.GetCheckable(s, "testing.default", "ds-myds")
 	if !a.Nil(err) {
 		return
 	}
-	//a.Equal("a nice deployment", host.Notes)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("myds", host.Vars[VarName])
-	a.Equal("daemonset", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/ds-myds", host.Vars[VarOwner])
+	//a.Equal("a nice deployment", host.GetNotes())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("myds", host.GetVars()[VarName])
+	a.Equal("daemonset", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/ds-myds", host.GetVars()[VarOwner])
 
 	if err := c.Kubernetes.ExtensionsV1beta1().DaemonSets("default").Delete("myds", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
@@ -382,14 +414,14 @@ func TestDaemonSet(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.ds-myds"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "ds-myds"); !a.NotNil(err) {
 		return
 	}
 }
 
-func TestStatefulSet(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestStatefulSet() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.AppsV1beta2().StatefulSets("default").Create(&appsv1beta2.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -405,18 +437,18 @@ func TestStatefulSet(t *testing.T) {
 		return
 	}
 
-	host, err := c.Icinga.GetHost("testing.default.statefulset-mystate")
+	host, err := s.GetCheckable(s, "testing.default", "statefulset-mystate")
 	if !a.Nil(err) {
 		return
 	}
-	//a.Equal("a nice deployment", host.Notes)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("mystate", host.Vars[VarName])
-	a.Equal("statefulset", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/statefulset-mystate", host.Vars[VarOwner])
+	//a.Equal("a nice deployment", host.GetNotes())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("mystate", host.GetVars()[VarName])
+	a.Equal("statefulset", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/statefulset-mystate", host.GetVars()[VarOwner])
 
 	if err := c.Kubernetes.AppsV1beta2().StatefulSets("default").Delete("mystate", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
@@ -426,14 +458,14 @@ func TestStatefulSet(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.statefulset-mystate"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "statefulset-mystate"); !a.NotNil(err) {
 		return
 	}
 }
 
-func TestReplicaSet(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestReplicaSet() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.ExtensionsV1beta1().ReplicaSets("default").Create(&extensionsv1beta1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -466,19 +498,19 @@ func TestReplicaSet(t *testing.T) {
 		return
 	}
 
-	host, err := c.Icinga.GetHost("testing.default.rs-myreplica")
+	host, err := s.GetCheckable(s, "testing.default", "rs-myreplica")
 	if !a.Nil(err) {
 		return
 	}
 
-	a.Equal("a nice deployment", host.Notes)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("myreplica", host.Vars[VarName])
-	a.Equal("replicaset", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/rs-myreplica", host.Vars[VarOwner])
+	a.Equal("a nice deployment", host.GetNotes())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("myreplica", host.GetVars()[VarName])
+	a.Equal("replicaset", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/rs-myreplica", host.GetVars()[VarOwner])
 
 	if err := c.Kubernetes.ExtensionsV1beta1().ReplicaSets("default").Delete("myreplica", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
@@ -488,14 +520,14 @@ func TestReplicaSet(t *testing.T) {
 		return
 	}
 
-	if _, err := c.Icinga.GetHost("testing.default.rs-myreplica"); !a.NotNil(err) {
+	if _, err := s.GetCheckable(s, "testing.default", "rs-myreplica"); !a.NotNil(err) {
 		return
 	}
 }
 
-func TestChangeNotes(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestChangeNotes() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -515,19 +547,19 @@ func TestChangeNotes(t *testing.T) {
 		return
 	}
 
-	host, err := c.Icinga.GetHost("testing.default.deploy-mydeploy")
+	host, err := s.GetCheckable(s, "testing.default", "deploy-mydeploy")
 	if !a.Nil(err) {
 		return
 	}
-	a.Equal("a nice deployment", host.Notes)
-	a.Equal("http://site.com/docs", host.NotesURL)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("mydeploy", host.Vars[VarName])
-	a.Equal("deployment", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/deploy-mydeploy", host.Vars[VarOwner])
+	a.Equal("a nice deployment", host.GetNotes())
+	a.Equal("http://site.com/docs", host.GetNotesURL())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("mydeploy", host.GetVars()[VarName])
+	a.Equal("deployment", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/deploy-mydeploy", host.GetVars()[VarOwner])
 
 	d, err := c.DeploymentLister.Deployments("default").Get("mydeploy")
 	if !a.Nil(err) {
@@ -547,24 +579,24 @@ func TestChangeNotes(t *testing.T) {
 		return
 	}
 
-	host, err = c.Icinga.GetHost("testing.default.deploy-mydeploy")
+	host, err = s.GetCheckable(s, "testing.default", "deploy-mydeploy")
 	if !a.Nil(err) {
 		return
 	}
-	a.Equal("an even nicer deployment", host.Notes)
-	a.Equal("http://site.com/docsv2", host.NotesURL)
-	a.NotNil(host.Vars)
-	a.Equal("check_kubernetes", host.CheckCommand)
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("mydeploy", host.Vars[VarName])
-	a.Equal("deployment", host.Vars[VarType])
-	a.Equal("default", host.Vars[VarNamespace])
-	a.Equal("default/deploy-mydeploy", host.Vars[VarOwner])
+	a.Equal("an even nicer deployment", host.GetNotes())
+	a.Equal("http://site.com/docsv2", host.GetNotesURL())
+	a.NotNil(host.GetVars())
+	a.Equal("check_kubernetes", host.GetCheckCommand())
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("mydeploy", host.GetVars()[VarName])
+	a.Equal("deployment", host.GetVars()[VarType])
+	a.Equal("default", host.GetVars()[VarNamespace])
+	a.Equal("default/deploy-mydeploy", host.GetVars()[VarOwner])
 }
 
-func TestUnmonitoredNamespace(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestUnmonitoredNamespace() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.Kubernetes.CoreV1().Namespaces().Create(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -585,16 +617,16 @@ func TestUnmonitoredNamespace(t *testing.T) {
 		return
 	}
 
-	_, err = c.Icinga.GetHostGroup("testing.develop")
+	_, err = s.GetContainer(s, "testing.develop")
 	a.Error(err)
 
-	_, err = c.Icinga.GetHost("testing.develop.po-standalone")
+	_, err = s.GetCheckable(s, "testing.develop", "po-standalone")
 	a.Error(err)
 }
 
-func TestCustomCheck(t *testing.T) {
-	a := assert.New(t)
-	c := testEnvironment()
+func (s *KubernetesIcingaTestSuite) TestCustomCheck() {
+	a := assert.New(s.T())
+	c := s.Controller
 
 	_, err := c.IcingaClient.IcingaV1().HostGroups("default").Create(&icingav1.HostGroup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -650,37 +682,37 @@ func TestCustomCheck(t *testing.T) {
 		return
 	}
 
-	a.Equal("testing", hostgroup.Vars[VarCluster])
-	a.Equal("something", hostgroup.Vars["myvar"])
-	a.Equal("default/myhostgroup", hostgroup.Vars[VarOwner])
-	a.Empty(hostgroup.Vars[VarType])
-	a.Empty(hostgroup.Vars[VarNamespace])
-	a.Empty(hostgroup.Vars[VarName])
+	a.Equal("testing", hostgroup.GetVars()[VarCluster])
+	a.Equal("something", hostgroup.GetVars()["myvar"])
+	a.Equal("default/myhostgroup", hostgroup.GetVars()[VarOwner])
+	a.Empty(hostgroup.GetVars()[VarType])
+	a.Empty(hostgroup.GetVars()[VarNamespace])
+	a.Empty(hostgroup.GetVars()[VarName])
 
 	host, err := c.Icinga.GetHost("testing.myhost")
 	if !a.Nil(err) {
 		return
 	}
 
-	a.Equal("testing", host.Vars[VarCluster])
-	a.Equal("nicevar", host.Vars["myanothervar"])
-	a.Equal("default/myhost", host.Vars[VarOwner])
-	a.Empty(host.Vars[VarType])
-	a.Empty(host.Vars[VarNamespace])
-	a.Empty(host.Vars[VarName])
+	a.Equal("testing", host.GetVars()[VarCluster])
+	a.Equal("nicevar", host.GetVars()["myanothervar"])
+	a.Equal("default/myhost", host.GetVars()[VarOwner])
+	a.Empty(host.GetVars()[VarType])
+	a.Empty(host.GetVars()[VarNamespace])
+	a.Empty(host.GetVars()[VarName])
 
 	check, err := c.Icinga.GetService("testing.myhost!http-check")
 	if !a.Nil(err) {
 		return
 	}
 
-	a.Equal("testing", check.Vars[VarCluster])
-	a.Equal("www.mysite.com", check.Vars["http_address"])
-	a.Equal("/health", check.Vars["http_uri"])
-	a.Equal("default/http-check", check.Vars[VarOwner])
-	a.Empty(check.Vars[VarType])
-	a.Empty(check.Vars[VarNamespace])
-	a.Empty(check.Vars[VarName])
+	a.Equal("testing", check.GetVars()[VarCluster])
+	a.Equal("www.mysite.com", check.GetVars()["http_address"])
+	a.Equal("/health", check.GetVars()["http_uri"])
+	a.Equal("default/http-check", check.GetVars()[VarOwner])
+	a.Empty(check.GetVars()[VarType])
+	a.Empty(check.GetVars()[VarNamespace])
+	a.Empty(check.GetVars()[VarName])
 
 	// Delete everything
 
@@ -704,7 +736,7 @@ func TestCustomCheck(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	if _, err := c.Icinga.GetHostGroup("testing.myhostgroup"); !a.Error(err) {
+	if _, err := s.GetContainer(s, "testing.myhostgroup"); !a.Error(err) {
 		return
 	}
 

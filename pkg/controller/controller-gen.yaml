@@ -5,6 +5,7 @@ controllerextra: |
   Icinga icinga2.Client
   Tag string
   DefaultVars map[string]string
+  Mapping Mapping
 clientsets:
 - name: kubernetes
   defaultresync: 300
