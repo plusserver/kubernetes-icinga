@@ -108,7 +108,7 @@ func MakeEvent(kube kubernetes.Interface, o metav1.Object, message, kind string,
 
 	_, err := kube.CoreV1().Events(o.GetNamespace()).Create(event)
 	if err != nil {
-		log.Error("error creating event for %s/%s with message '%s': %s", o.GetNamespace(), o.GetName(), message, err.Error())
+		log.Errorf("error creating event for %s/%s with message '%s': %s", o.GetNamespace(), o.GetName(), message, err.Error())
 	}
 	return err
 }
