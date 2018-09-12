@@ -31,7 +31,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 				log.Errorf("error updating icinga hostgroup '%s': %s", newHg.Name, err.Error())
 				MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 			} else {
-				MakeEvent(c.Kubernetes, hostgroup, "hostgroup updated", "Check", false)
+				MakeEvent(c.Kubernetes, hostgroup, "hostgroup updated", "HostGroup", false)
 			}
 			return err
 		}
@@ -42,7 +42,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 			log.Errorf("error creating icinga hostgroup '%s': %s", newHg.Name, err.Error())
 			MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 		} else {
-			MakeEvent(c.Kubernetes, hostgroup, "hostgroup created", "Check", false)
+			MakeEvent(c.Kubernetes, hostgroup, "hostgroup created", "HostGroup", false)
 		}
 		return err
 	}
@@ -115,7 +115,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 				log.Errorf("error updating icinga host '%s': %s", ih.Name, err.Error())
 				MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 			} else {
-				MakeEvent(c.Kubernetes, host, "host updated", "Check", false)
+				MakeEvent(c.Kubernetes, host, "host updated", "Host", false)
 			}
 			return err
 		}
@@ -126,7 +126,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 			log.Errorf("error creating icinga host '%s': %s", ih.Name, err.Error())
 			MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 		} else {
-			MakeEvent(c.Kubernetes, host, "host created", "Check", false)
+			MakeEvent(c.Kubernetes, host, "host created", "Host", false)
 		}
 		return err
 	}
