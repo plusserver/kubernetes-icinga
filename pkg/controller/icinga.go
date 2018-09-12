@@ -28,6 +28,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 			log.Infof("updating icinga hostgroup '%s'", newHg.Name)
 			err = c.Icinga.UpdateHostGroup(newHg)
 			if err != nil {
+				log.Errorf("error updating icinga hostgroup '%s': %s", newHg.Name, err.Error())
 				MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 			} else {
 				MakeEvent(c.Kubernetes, hostgroup, "hostgroup updated", "Check", false)
@@ -38,6 +39,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 		log.Infof("creating icinga hostgroup '%s'", newHg.Name)
 		err = c.Icinga.CreateHostGroup(newHg)
 		if err != nil {
+			log.Errorf("error creating icinga hostgroup '%s': %s", newHg.Name, err.Error())
 			MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 		} else {
 			MakeEvent(c.Kubernetes, hostgroup, "hostgroup created", "Check", false)
@@ -110,6 +112,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 			log.Infof("updating icinga host '%s'", ih.Name)
 			err = c.Icinga.UpdateHost(ih)
 			if err != nil {
+				log.Errorf("error updating icinga host '%s': %s", ih.Name, err.Error())
 				MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 			} else {
 				MakeEvent(c.Kubernetes, host, "host updated", "Check", false)
@@ -120,6 +123,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 		log.Infof("creating icinga host '%s'", ih.Name)
 		err = c.Icinga.CreateHost(ih)
 		if err != nil {
+			log.Errorf("error creating icinga host '%s': %s", ih.Name, err.Error())
 			MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 		} else {
 			MakeEvent(c.Kubernetes, host, "host created", "Check", false)
@@ -173,9 +177,10 @@ func (c *Controller) CheckCreatedOrUpdated(check *icingav1.Check) error {
 			oc.Notes != nc.Notes ||
 			oc.NotesURL != nc.NotesURL ||
 			varsDiffer(oc.Vars, nc.Vars) {
-			log.Infof("updating icinga check '%s'", nc.Name)
+			log.Infof("updating icinga service '%s'", nc.Name)
 			err = c.Icinga.UpdateService(nc)
 			if err != nil {
+				log.Errorf("error updating icinga service '%s': %s", nc.Name, err.Error())
 				MakeEvent(c.Kubernetes, check, err.Error(), "Check", true)
 			} else {
 				MakeEvent(c.Kubernetes, check, "service updated", "Check", false)
