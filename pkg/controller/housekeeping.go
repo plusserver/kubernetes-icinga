@@ -1,6 +1,7 @@
 package main
 
 import (
+	"k8s.io/apimachinery/pkg/labels"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,6 +17,7 @@ func (c *Controller) IcingaHousekeeping() {
 		c.IcingaHostGroupHousekeeping()
 		c.IcingaHostHousekeeping()
 		c.IcingaCheckHousekeeping()
+		c.CrHousekeeping()
 		time.Sleep(60 * time.Second)
 	}
 }
@@ -156,6 +158,54 @@ func (c *Controller) IcingaCheckHousekeeping() {
 			err = c.Icinga.DeleteService(check.FullName())
 			if err != nil {
 				log.Errorf("housekeeping: error deleting icinga check '%s': %s", check.Name, err.Error())
+			}
+		}
+	}
+}
+
+func (c *Controller) CrHousekeeping() {
+
+	if c.Mapping.Name() == "hostgroup" {
+		hosts, err := c.HostLister.List(labels.Everything())
+		if err != nil {
+			log.Errorf("error listing hosts: %s", err.Error())
+			return
+		}
+
+		for _, h := range hosts {
+			log.Debugf("[crhousekeeping] checking host '%s/%s'", h.Namespace, h.Name)
+			if h.Spec.Vars[VarCluster] != c.Tag {
+				log.Debugf("[crhousekeeping] skipping: is tagged for '%s', not us (%s)", h.Spec.Vars[VarCluster], c.Tag)
+				continue
+			}
+			if len(h.OwnerReferences) != 1 {
+				log.Debugf("[crhousekeeping] skipping: has %d owners, not the expected 1", len(h.OwnerReferences))
+				continue
+			}
+			or := h.OwnerReferences[0]
+
+			switch or.Kind {
+			case "Pod":
+				_, err = c.PodLister.Pods(h.Namespace).Get(or.Name)
+			case "Deployment":
+				_, err = c.DeploymentLister.Deployments(h.Namespace).Get(or.Name)
+			case "DaemonSet":
+				_, err = c.DaemonSetLister.DaemonSets(h.Namespace).Get(or.Name)
+			case "ReplicaSet":
+				_, err = c.ReplicaSetLister.ReplicaSets(h.Namespace).Get(or.Name)
+			case "StatefulSet":
+				_, err = c.StatefulSetLister.StatefulSets(h.Namespace).Get(or.Name)
+			case "Node":
+				_, err = c.NodeLister.Get(or.Name)
+			default:
+				err = nil
+			}
+			if errors.IsNotFound(err) {
+				log.Infof("[crhousekeeping] deleting obsolete host '%s/%s' (owner %s '%s/%s' no longer exists)", h.Namespace, h.Name, or.Kind, h.Namespace, or.Name)
+				err2 := c.IcingaClient.IcingaV1().Hosts(h.Namespace).Delete(h.Name, &metav1.DeleteOptions{})
+				if err2 != nil {
+					log.Errorf("[crhousekeeping] error deleting obsolete host '%s/%s': %s", h.Namespace, h.Name, err.Error())
+				}
 			}
 		}
 	}

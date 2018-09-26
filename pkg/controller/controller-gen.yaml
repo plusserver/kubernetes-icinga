@@ -8,7 +8,7 @@ controllerextra: |
   Mapping Mapping
 clientsets:
 - name: kubernetes
-  defaultresync: 300
+  defaultresync: 60
   apis:
   - name: core
     version: v1
@@ -63,7 +63,7 @@ clientsets:
       delete: true
 - name: icinga
   import: github.com/Nexinto/kubernetes-icinga
-  defaultresync: 300
+  defaultresync: 60
   apis:
   - name: icinga
     version: v1

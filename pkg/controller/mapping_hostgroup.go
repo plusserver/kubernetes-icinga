@@ -12,6 +12,10 @@ import (
 
 type HostGroupMapping struct{}
 
+func (m *HostGroupMapping) Name() string {
+	return "hostgroup"
+}
+
 func (m *HostGroupMapping) MonitorCluster(c *Controller) error {
 	return nil
 }

@@ -10,6 +10,10 @@ import (
 
 type HostMapping struct{}
 
+func (m *HostMapping) Name() string {
+	return "host"
+}
+
 func (m *HostMapping) MonitorCluster(c *Controller) error {
 	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get("kube-system", metav1.GetOptions{})
 	if err != nil {

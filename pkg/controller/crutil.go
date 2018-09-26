@@ -14,22 +14,22 @@ func (c *Controller) reconcileHostGroup(hostgroup *icingav1.HostGroup) error {
 	if err == nil {
 		if !reflect.DeepEqual(ohg.Spec, hostgroup.Spec) {
 			hostgroup.Spec.DeepCopyInto(&ohg.Spec)
-			log.Infof("updating hostgroup '%s/%s'", ohg.Namespace, ohg.Name)
+			log.Infof("updating hostgroup cr '%s/%s'", ohg.Namespace, ohg.Name)
 			_, err := c.IcingaClient.IcingaV1().HostGroups(ohg.Namespace).Update(ohg)
 			if err != nil {
-				log.Errorf("error updating hostgroup '%s/%s': %s", ohg.Namespace, ohg.Name, err.Error())
+				log.Errorf("error updating hostgroup cr '%s/%s': %s", ohg.Namespace, ohg.Name, err.Error())
 				return err
 			}
 		}
 	} else if errors.IsNotFound(err) {
-		log.Infof("creating hostgroup '%s/%s'", hostgroup.Namespace, hostgroup.Name)
+		log.Infof("creating hostgroup cr '%s/%s'", hostgroup.Namespace, hostgroup.Name)
 		_, err := c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).Create(hostgroup)
 		if err != nil {
-			log.Errorf("error creating hostgroup '%s/%s': %s", hostgroup.Namespace, hostgroup.Name, err.Error())
+			log.Errorf("error creating hostgroup cr '%s/%s': %s", hostgroup.Namespace, hostgroup.Name, err.Error())
 			return err
 		}
 	} else {
-		log.Errorf("error getting hostgroup '%s/%s': %s", hostgroup.Namespace, hostgroup.Name, err.Error())
+		log.Errorf("error getting hostgroup cr '%s/%s': %s", hostgroup.Namespace, hostgroup.Name, err.Error())
 		return err
 	}
 
@@ -39,12 +39,12 @@ func (c *Controller) reconcileHostGroup(hostgroup *icingav1.HostGroup) error {
 func (c *Controller) deleteHostGroup(namespace, name string) error {
 	err := c.IcingaClient.IcingaV1().HostGroups(namespace).Delete(name, &metav1.DeleteOptions{})
 	if err == nil {
-		log.Debugf("deleted hostgroup '%s/%s'", namespace, name)
+		log.Debugf("deleted hostgroup cr '%s/%s'", namespace, name)
 		return nil
 	} else if errors.IsNotFound(err) {
 		return nil
 	} else {
-		log.Debugf("error deleting hostgroup '%s/%s': %s", namespace, name, err.Error())
+		log.Debugf("error deleting hostgroup cr '%s/%s': %s", namespace, name, err.Error())
 		return err
 	}
 }
@@ -54,22 +54,22 @@ func (c *Controller) reconcileHost(host *icingav1.Host) error {
 	if err == nil {
 		if !reflect.DeepEqual(oh.Spec, host.Spec) {
 			host.Spec.DeepCopyInto(&oh.Spec)
-			log.Infof("updating host '%s/%s'", oh.Namespace, oh.Name)
+			log.Infof("updating host cr '%s/%s'", oh.Namespace, oh.Name)
 			_, err := c.IcingaClient.IcingaV1().Hosts(oh.Namespace).Update(oh)
 			if err != nil {
-				log.Errorf("error updating host '%s/%s': %s", oh.Namespace, oh.Name, err.Error())
+				log.Errorf("error updating host cr '%s/%s': %s", oh.Namespace, oh.Name, err.Error())
 				return err
 			}
 		}
 	} else if errors.IsNotFound(err) {
-		log.Infof("creating host '%s/%s'", host.Namespace, host.Name)
+		log.Infof("creating host cr '%s/%s'", host.Namespace, host.Name)
 		_, err := c.IcingaClient.IcingaV1().Hosts(host.Namespace).Create(host)
 		if err != nil {
-			log.Errorf("error creating host '%s/%s': %s", host.Namespace, host.Name, err.Error())
+			log.Errorf("error creating host cr '%s/%s': %s", host.Namespace, host.Name, err.Error())
 			return err
 		}
 	} else {
-		log.Errorf("error getting host '%s/%s': %s", host.Namespace, host.Name, err.Error())
+		log.Errorf("error getting host cr '%s/%s': %s", host.Namespace, host.Name, err.Error())
 		return err
 	}
 
@@ -79,12 +79,12 @@ func (c *Controller) reconcileHost(host *icingav1.Host) error {
 func (c *Controller) deleteHost(namespace, name string) error {
 	err := c.IcingaClient.IcingaV1().Hosts(namespace).Delete(name, &metav1.DeleteOptions{})
 	if err == nil {
-		log.Debugf("deleted host '%s/%s'", namespace, name)
+		log.Debugf("deleted host cr '%s/%s'", namespace, name)
 		return nil
 	} else if errors.IsNotFound(err) {
 		return nil
 	} else {
-		log.Debugf("error deleting host '%s/%s': %s", namespace, name, err.Error())
+		log.Debugf("error deleting host cr '%s/%s': %s", namespace, name, err.Error())
 		return err
 	}
 }
@@ -94,22 +94,22 @@ func (c *Controller) reconcileCheck(check *icingav1.Check) error {
 	if err == nil {
 		if !reflect.DeepEqual(check.Spec, oc.Spec) {
 			check.Spec.DeepCopyInto(&oc.Spec)
-			log.Infof("updating check '%s/%s'", oc.Namespace, oc.Name)
+			log.Infof("updating check cr '%s/%s'", oc.Namespace, oc.Name)
 			_, err := c.IcingaClient.IcingaV1().Checks(oc.Namespace).Update(oc)
 			if err != nil {
-				log.Errorf("error updating check '%s/%s': %s", oc.Namespace, oc.Name, err.Error())
+				log.Errorf("error updating check cr '%s/%s': %s", oc.Namespace, oc.Name, err.Error())
 				return err
 			}
 		}
 	} else if errors.IsNotFound(err) {
-		log.Infof("creating check '%s/%s'", check.Namespace, check.Name)
+		log.Infof("creating check cr '%s/%s'", check.Namespace, check.Name)
 		_, err := c.IcingaClient.IcingaV1().Checks(check.Namespace).Create(check)
 		if err != nil {
-			log.Errorf("error creating check '%s/%s': %s", check.Namespace, check.Name, err.Error())
+			log.Errorf("error creating check cr '%s/%s': %s", check.Namespace, check.Name, err.Error())
 			return err
 		}
 	} else {
-		log.Errorf("error getting check '%s/%s': %s", check.Namespace, check.Name, err.Error())
+		log.Errorf("error getting check cr '%s/%s': %s", check.Namespace, check.Name, err.Error())
 		return err
 	}
 
@@ -119,12 +119,12 @@ func (c *Controller) reconcileCheck(check *icingav1.Check) error {
 func (c *Controller) deleteCheck(namespace, name string) error {
 	err := c.IcingaClient.IcingaV1().Checks(namespace).Delete(name, &metav1.DeleteOptions{})
 	if err == nil {
-		log.Debugf("deleted check '%s/%s'", namespace, name)
+		log.Debugf("deleted check cr '%s/%s'", namespace, name)
 		return nil
 	} else if errors.IsNotFound(err) {
 		return nil
 	} else {
-		log.Debugf("error deleting check '%s/%s': %s", namespace, name, err.Error())
+		log.Debugf("error deleting check cr '%s/%s': %s", namespace, name, err.Error())
 		return err
 	}
 }

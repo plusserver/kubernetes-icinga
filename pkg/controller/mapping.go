@@ -6,6 +6,7 @@ import (
 )
 
 type Mapping interface {
+	Name() string
 	MonitorCluster(c *Controller) error
 	MonitorNamespace(c *Controller, namespace *corev1.Namespace) error
 	UnmonitorNamespace(c *Controller, namespace *corev1.Namespace) error

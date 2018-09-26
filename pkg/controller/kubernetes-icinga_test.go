@@ -748,3 +748,74 @@ func (s *KubernetesIcingaTestSuite) TestCustomCheck() {
 		return
 	}
 }
+
+func (s *KubernetesIcingaTestSuite) TestCRHousekeeping() {
+	a := assert.New(s.T())
+	c := s.Controller
+
+	log.SetLevel(log.DebugLevel)
+
+	if _, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "mydeploy"}}); !a.Nil(err) {
+		return
+	}
+
+	if c.Mapping.Name() == "hostgroup" {
+
+		if _, err := c.IcingaClient.IcingaV1().Hosts("default").Create(&icingav1.Host{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "leavemealone",
+				Namespace: "default",
+			},
+			Spec: icingav1.HostSpec{
+				Name:       "leavemealone",
+				Hostgroups: []string{"default"},
+			},
+		}); !a.Nil(err) {
+			return
+		}
+
+		if _, err := c.IcingaClient.IcingaV1().Hosts("default").Create(&icingav1.Host{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "deploy-olddeploy",
+				Namespace: "default",
+				OwnerReferences: []metav1.OwnerReference{{
+					Kind: "Deployment",
+					Name: "olddeploy",
+				}},
+			},
+			Spec: icingav1.HostSpec{
+				Name:       "default.deploy-olddeploy",
+				Hostgroups: []string{"default"},
+				Vars:       map[string]string{"kubernetes_cluster": "testing"},
+			},
+		}); !a.Nil(err) {
+			return
+		}
+
+		if err := c.simulate(); !a.Nil(err) {
+			return
+		}
+
+		//go c.IcingaHousekeeping()
+
+		c.CrHousekeeping()
+
+		//time.Sleep(2 * time.Second)
+
+		if _, err := c.IcingaClient.IcingaV1().Hosts("default").Get("deploy-mydeploy", metav1.GetOptions{}); !a.Nil(err, "host deploy-mydeploy should still exist") {
+			return
+		}
+
+		if _, err := c.IcingaClient.IcingaV1().Hosts("default").Get("leavemealone", metav1.GetOptions{}); !a.Nil(err, "host leavemealone should still exist") {
+			return
+		}
+
+		if _, err := c.IcingaClient.IcingaV1().Hosts("default").Get("deploy-olddeploy", metav1.GetOptions{}); !a.Error(err, "host deploy-olddeploy should have been cleaned up") {
+			return
+		}
+	} else {
+		// TODO
+	}
+
+}

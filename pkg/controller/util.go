@@ -1,6 +1,7 @@
 package main
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
@@ -107,7 +108,7 @@ func MakeEvent(kube kubernetes.Interface, o metav1.Object, message, kind string,
 	}
 
 	_, err := kube.CoreV1().Events(o.GetNamespace()).Create(event)
-	if err != nil {
+	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Errorf("error creating event for %s/%s with message '%s': %s", o.GetNamespace(), o.GetName(), message, err.Error())
 	}
 	return err
