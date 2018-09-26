@@ -1,12 +1,11 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-	"reflect"
-
 	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
 )
 
 func (c *Controller) reconcileHostGroup(hostgroup *icingav1.HostGroup) error {

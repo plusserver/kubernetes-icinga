@@ -20,7 +20,11 @@ func (c *Controller) PodDeleted(pod *corev1.Pod) error {
 
 func (c *Controller) NodeCreatedOrUpdated(node *corev1.Node) error {
 	log.Debugf("processing node '%s'", node.Name)
-	return c.Mapping.MonitorNode(c, node)
+	if node.GetDeletionTimestamp() != nil {
+		return c.Mapping.UnmonitorNode(c, node)
+	} else {
+		return c.Mapping.MonitorNode(c, node)
+	}
 }
 
 func (c *Controller) NodeDeleted(node *corev1.Node) error {
@@ -30,10 +34,12 @@ func (c *Controller) NodeDeleted(node *corev1.Node) error {
 
 func (c *Controller) NamespaceCreatedOrUpdated(namespace *corev1.Namespace) error {
 	log.Debugf("processing namespace '%s'", namespace.Name)
-	if c.monitored(namespace) {
-		return c.Mapping.MonitorNamespace(c, namespace)
-	} else {
+	if !c.monitored(namespace) {
 		return c.Mapping.UnmonitorNamespace(c, namespace)
+	} else if namespace.GetDeletionTimestamp() != nil {
+		return c.Mapping.UnmonitorNamespace(c, namespace)
+	} else {
+		return c.Mapping.MonitorNamespace(c, namespace)
 	}
 }
 
@@ -71,7 +77,6 @@ func (c *Controller) ReplicaSetDeleted(replicaset *extensionsv1beta1.ReplicaSet)
 
 func (c *Controller) StatefulSetCreatedOrUpdated(statefulset *appsv1beta2.StatefulSet) error {
 	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1beta2")
-
 }
 
 func (c *Controller) StatefulSetDeleted(statefulset *appsv1beta2.StatefulSet) error {
@@ -82,6 +87,8 @@ func (c *Controller) StatefulSetDeleted(statefulset *appsv1beta2.StatefulSet) er
 func (c *Controller) processWorkload(o metav1.Object, abbrev, typ, kind, apiVersion string) error {
 	log.Debugf("processing %s '%s/%s'", typ, o.GetNamespace(), o.GetName())
 	if !c.monitored(o) {
+		return c.Mapping.UnmonitorWorkload(c, o, abbrev)
+	} else if o.GetDeletionTimestamp() != nil {
 		return c.Mapping.UnmonitorWorkload(c, o, abbrev)
 	} else {
 		return c.Mapping.MonitorWorkload(c, o, abbrev, typ, kind, apiVersion)
