@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Nexinto/go-icinga2-client/icinga2"
@@ -106,7 +104,6 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 		if oh.Name != ih.Name ||
 			(oh.CheckCommand != ih.CheckCommand && ih.CheckCommand != "") ||
 			varsDiffer(oh.Vars, ih.Vars) ||
-			!reflect.DeepEqual(oh.Groups, ih.Groups) ||
 			oh.Notes != ih.Notes ||
 			oh.NotesURL != ih.NotesURL {
 			log.Infof("updating icinga host '%s'", ih.Name)
