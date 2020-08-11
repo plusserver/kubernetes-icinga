@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Nexinto
+Copyright 2020 Nexinto
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	icinga_nexinto_com_v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icinganexintocomv1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,20 +39,20 @@ var hostgroupsResource = schema.GroupVersionResource{Group: "icinga.nexinto.com"
 var hostgroupsKind = schema.GroupVersionKind{Group: "icinga.nexinto.com", Version: "v1", Kind: "HostGroup"}
 
 // Get takes name of the hostGroup, and returns the corresponding hostGroup object, and an error if there is any.
-func (c *FakeHostGroups) Get(name string, options v1.GetOptions) (result *icinga_nexinto_com_v1.HostGroup, err error) {
+func (c *FakeHostGroups) Get(name string, options v1.GetOptions) (result *icinganexintocomv1.HostGroup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(hostgroupsResource, c.ns, name), &icinga_nexinto_com_v1.HostGroup{})
+		Invokes(testing.NewGetAction(hostgroupsResource, c.ns, name), &icinganexintocomv1.HostGroup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.HostGroup), err
+	return obj.(*icinganexintocomv1.HostGroup), err
 }
 
 // List takes label and field selectors, and returns the list of HostGroups that match those selectors.
-func (c *FakeHostGroups) List(opts v1.ListOptions) (result *icinga_nexinto_com_v1.HostGroupList, err error) {
+func (c *FakeHostGroups) List(opts v1.ListOptions) (result *icinganexintocomv1.HostGroupList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(hostgroupsResource, hostgroupsKind, c.ns, opts), &icinga_nexinto_com_v1.HostGroupList{})
+		Invokes(testing.NewListAction(hostgroupsResource, hostgroupsKind, c.ns, opts), &icinganexintocomv1.HostGroupList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeHostGroups) List(opts v1.ListOptions) (result *icinga_nexinto_com_v
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &icinga_nexinto_com_v1.HostGroupList{}
-	for _, item := range obj.(*icinga_nexinto_com_v1.HostGroupList).Items {
+	list := &icinganexintocomv1.HostGroupList{ListMeta: obj.(*icinganexintocomv1.HostGroupList).ListMeta}
+	for _, item := range obj.(*icinganexintocomv1.HostGroupList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,31 +79,31 @@ func (c *FakeHostGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
 }
 
 // Create takes the representation of a hostGroup and creates it.  Returns the server's representation of the hostGroup, and an error, if there is any.
-func (c *FakeHostGroups) Create(hostGroup *icinga_nexinto_com_v1.HostGroup) (result *icinga_nexinto_com_v1.HostGroup, err error) {
+func (c *FakeHostGroups) Create(hostGroup *icinganexintocomv1.HostGroup) (result *icinganexintocomv1.HostGroup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(hostgroupsResource, c.ns, hostGroup), &icinga_nexinto_com_v1.HostGroup{})
+		Invokes(testing.NewCreateAction(hostgroupsResource, c.ns, hostGroup), &icinganexintocomv1.HostGroup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.HostGroup), err
+	return obj.(*icinganexintocomv1.HostGroup), err
 }
 
 // Update takes the representation of a hostGroup and updates it. Returns the server's representation of the hostGroup, and an error, if there is any.
-func (c *FakeHostGroups) Update(hostGroup *icinga_nexinto_com_v1.HostGroup) (result *icinga_nexinto_com_v1.HostGroup, err error) {
+func (c *FakeHostGroups) Update(hostGroup *icinganexintocomv1.HostGroup) (result *icinganexintocomv1.HostGroup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(hostgroupsResource, c.ns, hostGroup), &icinga_nexinto_com_v1.HostGroup{})
+		Invokes(testing.NewUpdateAction(hostgroupsResource, c.ns, hostGroup), &icinganexintocomv1.HostGroup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.HostGroup), err
+	return obj.(*icinganexintocomv1.HostGroup), err
 }
 
 // Delete takes name of the hostGroup and deletes it. Returns an error if one occurs.
 func (c *FakeHostGroups) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(hostgroupsResource, c.ns, name), &icinga_nexinto_com_v1.HostGroup{})
+		Invokes(testing.NewDeleteAction(hostgroupsResource, c.ns, name), &icinganexintocomv1.HostGroup{})
 
 	return err
 }
@@ -112,17 +112,17 @@ func (c *FakeHostGroups) Delete(name string, options *v1.DeleteOptions) error {
 func (c *FakeHostGroups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(hostgroupsResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &icinga_nexinto_com_v1.HostGroupList{})
+	_, err := c.Fake.Invokes(action, &icinganexintocomv1.HostGroupList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched hostGroup.
-func (c *FakeHostGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *icinga_nexinto_com_v1.HostGroup, err error) {
+func (c *FakeHostGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *icinganexintocomv1.HostGroup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(hostgroupsResource, c.ns, name, data, subresources...), &icinga_nexinto_com_v1.HostGroup{})
+		Invokes(testing.NewPatchSubresourceAction(hostgroupsResource, c.ns, name, pt, data, subresources...), &icinganexintocomv1.HostGroup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.HostGroup), err
+	return obj.(*icinganexintocomv1.HostGroup), err
 }

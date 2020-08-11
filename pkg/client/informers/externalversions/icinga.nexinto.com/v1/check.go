@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Nexinto
+Copyright 2020 Nexinto
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ package v1
 import (
 	time "time"
 
-	icinga_nexinto_com_v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icinganexintocomv1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	versioned "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/listers/icinga.nexinto.com/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
@@ -57,20 +57,20 @@ func NewCheckInformer(client versioned.Interface, namespace string, resyncPeriod
 func NewFilteredCheckInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
 				return client.IcingaV1().Checks(namespace).List(options)
 			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
 				return client.IcingaV1().Checks(namespace).Watch(options)
 			},
 		},
-		&icinga_nexinto_com_v1.Check{},
+		&icinganexintocomv1.Check{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +81,7 @@ func (f *checkInformer) defaultInformer(client versioned.Interface, resyncPeriod
 }
 
 func (f *checkInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&icinga_nexinto_com_v1.Check{}, f.defaultInformer)
+	return f.factory.InformerFor(&icinganexintocomv1.Check{}, f.defaultInformer)
 }
 
 func (f *checkInformer) Lister() v1.CheckLister {

@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Nexinto
+Copyright 2020 Nexinto
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ limitations under the License.
 package v1
 
 import (
+	"time"
+
 	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	scheme "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned/scheme"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
@@ -37,11 +39,11 @@ type HostsGetter interface {
 type HostInterface interface {
 	Create(*v1.Host) (*v1.Host, error)
 	Update(*v1.Host) (*v1.Host, error)
-	Delete(name string, options *meta_v1.DeleteOptions) error
-	DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error
-	Get(name string, options meta_v1.GetOptions) (*v1.Host, error)
-	List(opts meta_v1.ListOptions) (*v1.HostList, error)
-	Watch(opts meta_v1.ListOptions) (watch.Interface, error)
+	Delete(name string, options *metav1.DeleteOptions) error
+	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
+	Get(name string, options metav1.GetOptions) (*v1.Host, error)
+	List(opts metav1.ListOptions) (*v1.HostList, error)
+	Watch(opts metav1.ListOptions) (watch.Interface, error)
 	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Host, err error)
 	HostExpansion
 }
@@ -61,7 +63,7 @@ func newHosts(c *IcingaV1Client, namespace string) *hosts {
 }
 
 // Get takes name of the host, and returns the corresponding host object, and an error if there is any.
-func (c *hosts) Get(name string, options meta_v1.GetOptions) (result *v1.Host, err error) {
+func (c *hosts) Get(name string, options metav1.GetOptions) (result *v1.Host, err error) {
 	result = &v1.Host{}
 	err = c.client.Get().
 		Namespace(c.ns).
@@ -74,24 +76,34 @@ func (c *hosts) Get(name string, options meta_v1.GetOptions) (result *v1.Host, e
 }
 
 // List takes label and field selectors, and returns the list of Hosts that match those selectors.
-func (c *hosts) List(opts meta_v1.ListOptions) (result *v1.HostList, err error) {
+func (c *hosts) List(opts metav1.ListOptions) (result *v1.HostList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1.HostList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("hosts").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested hosts.
-func (c *hosts) Watch(opts meta_v1.ListOptions) (watch.Interface, error) {
+func (c *hosts) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("hosts").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -121,7 +133,7 @@ func (c *hosts) Update(host *v1.Host) (result *v1.Host, err error) {
 }
 
 // Delete takes name of the host and deletes it. Returns an error if one occurs.
-func (c *hosts) Delete(name string, options *meta_v1.DeleteOptions) error {
+func (c *hosts) Delete(name string, options *metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("hosts").
@@ -132,11 +144,16 @@ func (c *hosts) Delete(name string, options *meta_v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *hosts) DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error {
+func (c *hosts) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("hosts").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

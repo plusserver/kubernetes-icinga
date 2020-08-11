@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Nexinto
+Copyright 2020 Nexinto
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	icinga_nexinto_com_v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icinganexintocomv1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,20 +39,20 @@ var checksResource = schema.GroupVersionResource{Group: "icinga.nexinto.com", Ve
 var checksKind = schema.GroupVersionKind{Group: "icinga.nexinto.com", Version: "v1", Kind: "Check"}
 
 // Get takes name of the check, and returns the corresponding check object, and an error if there is any.
-func (c *FakeChecks) Get(name string, options v1.GetOptions) (result *icinga_nexinto_com_v1.Check, err error) {
+func (c *FakeChecks) Get(name string, options v1.GetOptions) (result *icinganexintocomv1.Check, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(checksResource, c.ns, name), &icinga_nexinto_com_v1.Check{})
+		Invokes(testing.NewGetAction(checksResource, c.ns, name), &icinganexintocomv1.Check{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.Check), err
+	return obj.(*icinganexintocomv1.Check), err
 }
 
 // List takes label and field selectors, and returns the list of Checks that match those selectors.
-func (c *FakeChecks) List(opts v1.ListOptions) (result *icinga_nexinto_com_v1.CheckList, err error) {
+func (c *FakeChecks) List(opts v1.ListOptions) (result *icinganexintocomv1.CheckList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(checksResource, checksKind, c.ns, opts), &icinga_nexinto_com_v1.CheckList{})
+		Invokes(testing.NewListAction(checksResource, checksKind, c.ns, opts), &icinganexintocomv1.CheckList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeChecks) List(opts v1.ListOptions) (result *icinga_nexinto_com_v1.Ch
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &icinga_nexinto_com_v1.CheckList{}
-	for _, item := range obj.(*icinga_nexinto_com_v1.CheckList).Items {
+	list := &icinganexintocomv1.CheckList{ListMeta: obj.(*icinganexintocomv1.CheckList).ListMeta}
+	for _, item := range obj.(*icinganexintocomv1.CheckList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,31 +79,43 @@ func (c *FakeChecks) Watch(opts v1.ListOptions) (watch.Interface, error) {
 }
 
 // Create takes the representation of a check and creates it.  Returns the server's representation of the check, and an error, if there is any.
-func (c *FakeChecks) Create(check *icinga_nexinto_com_v1.Check) (result *icinga_nexinto_com_v1.Check, err error) {
+func (c *FakeChecks) Create(check *icinganexintocomv1.Check) (result *icinganexintocomv1.Check, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(checksResource, c.ns, check), &icinga_nexinto_com_v1.Check{})
+		Invokes(testing.NewCreateAction(checksResource, c.ns, check), &icinganexintocomv1.Check{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.Check), err
+	return obj.(*icinganexintocomv1.Check), err
 }
 
 // Update takes the representation of a check and updates it. Returns the server's representation of the check, and an error, if there is any.
-func (c *FakeChecks) Update(check *icinga_nexinto_com_v1.Check) (result *icinga_nexinto_com_v1.Check, err error) {
+func (c *FakeChecks) Update(check *icinganexintocomv1.Check) (result *icinganexintocomv1.Check, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(checksResource, c.ns, check), &icinga_nexinto_com_v1.Check{})
+		Invokes(testing.NewUpdateAction(checksResource, c.ns, check), &icinganexintocomv1.Check{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.Check), err
+	return obj.(*icinganexintocomv1.Check), err
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeChecks) UpdateStatus(check *icinganexintocomv1.Check) (*icinganexintocomv1.Check, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(checksResource, "status", c.ns, check), &icinganexintocomv1.Check{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*icinganexintocomv1.Check), err
 }
 
 // Delete takes name of the check and deletes it. Returns an error if one occurs.
 func (c *FakeChecks) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(checksResource, c.ns, name), &icinga_nexinto_com_v1.Check{})
+		Invokes(testing.NewDeleteAction(checksResource, c.ns, name), &icinganexintocomv1.Check{})
 
 	return err
 }
@@ -112,17 +124,17 @@ func (c *FakeChecks) Delete(name string, options *v1.DeleteOptions) error {
 func (c *FakeChecks) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(checksResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &icinga_nexinto_com_v1.CheckList{})
+	_, err := c.Fake.Invokes(action, &icinganexintocomv1.CheckList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched check.
-func (c *FakeChecks) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *icinga_nexinto_com_v1.Check, err error) {
+func (c *FakeChecks) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *icinganexintocomv1.Check, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(checksResource, c.ns, name, data, subresources...), &icinga_nexinto_com_v1.Check{})
+		Invokes(testing.NewPatchSubresourceAction(checksResource, c.ns, name, pt, data, subresources...), &icinganexintocomv1.Check{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*icinga_nexinto_com_v1.Check), err
+	return obj.(*icinganexintocomv1.Check), err
 }

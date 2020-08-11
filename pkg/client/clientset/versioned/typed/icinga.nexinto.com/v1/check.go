@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Nexinto
+Copyright 2020 Nexinto
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ limitations under the License.
 package v1
 
 import (
+	"time"
+
 	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	scheme "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned/scheme"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
@@ -37,11 +39,12 @@ type ChecksGetter interface {
 type CheckInterface interface {
 	Create(*v1.Check) (*v1.Check, error)
 	Update(*v1.Check) (*v1.Check, error)
-	Delete(name string, options *meta_v1.DeleteOptions) error
-	DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error
-	Get(name string, options meta_v1.GetOptions) (*v1.Check, error)
-	List(opts meta_v1.ListOptions) (*v1.CheckList, error)
-	Watch(opts meta_v1.ListOptions) (watch.Interface, error)
+	UpdateStatus(*v1.Check) (*v1.Check, error)
+	Delete(name string, options *metav1.DeleteOptions) error
+	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
+	Get(name string, options metav1.GetOptions) (*v1.Check, error)
+	List(opts metav1.ListOptions) (*v1.CheckList, error)
+	Watch(opts metav1.ListOptions) (watch.Interface, error)
 	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Check, err error)
 	CheckExpansion
 }
@@ -61,7 +64,7 @@ func newChecks(c *IcingaV1Client, namespace string) *checks {
 }
 
 // Get takes name of the check, and returns the corresponding check object, and an error if there is any.
-func (c *checks) Get(name string, options meta_v1.GetOptions) (result *v1.Check, err error) {
+func (c *checks) Get(name string, options metav1.GetOptions) (result *v1.Check, err error) {
 	result = &v1.Check{}
 	err = c.client.Get().
 		Namespace(c.ns).
@@ -74,24 +77,34 @@ func (c *checks) Get(name string, options meta_v1.GetOptions) (result *v1.Check,
 }
 
 // List takes label and field selectors, and returns the list of Checks that match those selectors.
-func (c *checks) List(opts meta_v1.ListOptions) (result *v1.CheckList, err error) {
+func (c *checks) List(opts metav1.ListOptions) (result *v1.CheckList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1.CheckList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("checks").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested checks.
-func (c *checks) Watch(opts meta_v1.ListOptions) (watch.Interface, error) {
+func (c *checks) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("checks").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -120,8 +133,24 @@ func (c *checks) Update(check *v1.Check) (result *v1.Check, err error) {
 	return
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+
+func (c *checks) UpdateStatus(check *v1.Check) (result *v1.Check, err error) {
+	result = &v1.Check{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("checks").
+		Name(check.Name).
+		SubResource("status").
+		Body(check).
+		Do().
+		Into(result)
+	return
+}
+
 // Delete takes name of the check and deletes it. Returns an error if one occurs.
-func (c *checks) Delete(name string, options *meta_v1.DeleteOptions) error {
+func (c *checks) Delete(name string, options *metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("checks").
@@ -132,11 +161,16 @@ func (c *checks) Delete(name string, options *meta_v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *checks) DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error {
+func (c *checks) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("checks").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()
