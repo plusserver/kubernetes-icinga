@@ -19,8 +19,8 @@ limitations under the License.
 package icinga
 
 import (
-	v1 "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/icinga.nexinto.com/v1"
-	internalinterfaces "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/icinga.nexinto.com/v1"
+	internalinterfaces "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

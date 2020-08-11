@@ -23,9 +23,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
-	icinga_nexinto_com "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/icinga.nexinto.com"
-	internalinterfaces "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
+	versioned "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned"
+	icinga_nexinto_com "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/icinga.nexinto.com"
+	internalinterfaces "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

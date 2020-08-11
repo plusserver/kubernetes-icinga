@@ -20,7 +20,7 @@ package versioned
 
 import (
 	glog "github.com/golang/glog"
-	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned/typed/icinga.nexinto.com/v1"
+	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned/typed/icinga.nexinto.com/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

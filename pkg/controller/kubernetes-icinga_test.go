@@ -17,8 +17,8 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 
-	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
-	icingafake "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned/fake"
+	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icingafake "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned/fake"
 )
 
 type KubernetesIcingaTestSuite struct {

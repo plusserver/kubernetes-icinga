@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com"
+	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com"
 )
 
 // SchemeGroupVersion is group version used to register these objects

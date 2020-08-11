@@ -21,10 +21,10 @@ package v1
 import (
 	time "time"
 
-	icinga_nexinto_com_v1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
-	versioned "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/Nexinto/kubernetes-icinga/pkg/client/listers/icinga.nexinto.com/v1"
+	icinga_nexinto_com_v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	versioned "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/listers/icinga.nexinto.com/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

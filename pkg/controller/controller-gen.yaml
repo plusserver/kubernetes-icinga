@@ -59,7 +59,7 @@ clientsets:
       update: true
       delete: true
 - name: icinga
-  import: github.com/Nexinto/kubernetes-icinga
+  import: github.com/Soluto-Private/kubernetes-icinga
   defaultresync: 60
   apis:
   - name: icinga

@@ -63,7 +63,6 @@ type HostList struct {
 }
 
 // +genclient
-// +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Check struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -83,6 +82,7 @@ type CheckSpec struct {
 }
 
 type CheckStatus struct {
+	Synced bool `json:"synced,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

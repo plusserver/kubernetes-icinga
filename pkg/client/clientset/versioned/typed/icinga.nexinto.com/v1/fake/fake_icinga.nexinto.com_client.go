@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1 "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned/typed/icinga.nexinto.com/v1"
+	v1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned/typed/icinga.nexinto.com/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

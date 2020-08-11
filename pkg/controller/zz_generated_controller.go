@@ -25,12 +25,12 @@ import (
 
 	appslisterv1 "k8s.io/client-go/listers/apps/v1"
 
-	icingaclientset "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
+	icingaclientset "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned"
 
 	"github.com/Nexinto/go-icinga2-client/icinga2"
-	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
-	icingainformers "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions"
-	icingalisterv1 "github.com/Nexinto/kubernetes-icinga/pkg/client/listers/icinga.nexinto.com/v1"
+	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icingainformers "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions"
+	icingalisterv1 "github.com/Soluto-Private/kubernetes-icinga/pkg/client/listers/icinga.nexinto.com/v1"
 )
 
 type Controller struct {

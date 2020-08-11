@@ -6,7 +6,7 @@ import (
 
 	"github.com/Nexinto/go-icinga2-client/icinga2"
 
-	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
+	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 )
 
 func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) error {

@@ -1,3 +1,4 @@
 check_kubernetes
 .idea
 *.sh
+vendor

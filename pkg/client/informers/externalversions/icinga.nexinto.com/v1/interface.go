@@ -19,7 +19,7 @@ limitations under the License.
 package v1
 
 import (
-	internalinterfaces "github.com/Nexinto/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/Soluto-Private/kubernetes-icinga/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

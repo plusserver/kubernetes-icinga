@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	icingaclientset "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
+	icingaclientset "github.com/Soluto-Private/kubernetes-icinga/pkg/client/clientset/versioned"
 	"gopkg.in/yaml.v2"
 )
 
