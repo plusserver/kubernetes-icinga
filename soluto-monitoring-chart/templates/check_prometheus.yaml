@@ -1,0 +1,30 @@
+{{- range .Values.icingaHosts}}
+{{ $hostName := .name }}
+{{- range .prometheus }}
+apiVersion: icinga.nexinto.com/v1
+kind: Check
+metadata:
+  name: {{ template "soluto-monitoring.name" $ }}-prom-{{ .name | lower }}
+spec:
+  name: {{ .name }}
+  host: {{ $hostName }}
+  checkcommand: check_prometheus
+  vars:
+    warning_threshold: {{ required "A warning threshold is required" .warning | quote }}
+    critical_threshold: {{ required "A critical threshold is required" .critical | quote }}
+    query: {{ required "A prometheus query is required" .query }}
+    method: {{ required "A prometheus method is required" .method }}
+    {{ if .prometheusEndpoint }}
+    prometheus_endpoint: {{ .prometheusEndpoint }}
+    {{- end }}
+    {{ if .maxCheckAttempts }}
+    max_check_attempts: {{ .maxCheckAttempts }}
+    {{- end }}
+    {{ if .checkInterval }}
+    check_interval: {{ .checkInterval }}
+    {{- end }}
+    {{ if .retryInterval }}
+    retryInterval: {{ .retryInterval }}
+    {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,8 @@
+{{ range .Values.icingaHosts }}
+apiVersion: icinga.nexinto.com/v1
+kind: Host
+metadata:
+  name: {{ .name }}
+spec:
+  name: {{ .name }}
+{{- end }}

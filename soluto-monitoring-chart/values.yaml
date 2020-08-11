@@ -1,0 +1,8 @@
+icingaHosts:
+  - name: my-test-host
+    prometheus:
+    - name: checkIngressRequests
+      query: scalar(sum(rate(nginx_ingress_controller_requests{ingress='push-notification-api', status=~'5.*'}[5m])) / sum(rate(nginx_ingress_controller_requests{ingress='push-notification-api'}[5m])) *100 or vector(0))
+      method: gt
+      critical: 10
+      warning: 5
