@@ -3,3 +3,4 @@ check_kubernetes
 .vscode
 *.sh
 vendor
+**/kubeconfig
