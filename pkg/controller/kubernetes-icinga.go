@@ -19,7 +19,10 @@ func main() {
 	flag.Parse()
 
 	// If this is not set, glog tries to log into something below /tmp which doesn't exist.
-	flag.Lookup("log_dir").Value.Set("/")
+	logDir := flag.Lookup("log_dir")
+	if logDir == nil {
+		flag.Set("log_dir", "/")
+	}
 
 	if e := os.Getenv("LOG_LEVEL"); e != "" {
 		if l, err := log.ParseLevel(e); err == nil {
