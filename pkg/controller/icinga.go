@@ -25,10 +25,14 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 		if hg.Name != newHg.Name || varsDiffer(hg.Vars, newHg.Vars) {
 			log.Infof("updating icinga hostgroup '%s'", newHg.Name)
 			err = c.Icinga.UpdateHostGroup(newHg)
+			defer c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).UpdateStatus(hostgroup)
+
 			if err != nil {
 				log.Errorf("error updating icinga hostgroup '%s': %s", newHg.Name, err.Error())
+				hostgroup.Status.Synced = false
 				MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 			} else {
+				hostgroup.Status.Synced = true
 				MakeEvent(c.Kubernetes, hostgroup, "hostgroup updated", "HostGroup", false)
 			}
 			return err
@@ -36,10 +40,14 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 	} else {
 		log.Infof("creating icinga hostgroup '%s'", newHg.Name)
 		err = c.Icinga.CreateHostGroup(newHg)
+		defer c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).UpdateStatus(hostgroup)
+
 		if err != nil {
 			log.Errorf("error creating icinga hostgroup '%s': %s", newHg.Name, err.Error())
+			hostgroup.Status.Synced = false
 			MakeEvent(c.Kubernetes, hostgroup, err.Error(), "HostGroup", true)
 		} else {
+			hostgroup.Status.Synced = true
 			MakeEvent(c.Kubernetes, hostgroup, "hostgroup created", "HostGroup", false)
 		}
 		return err
@@ -108,10 +116,14 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 			oh.NotesURL != ih.NotesURL {
 			log.Infof("updating icinga host '%s'", ih.Name)
 			err = c.Icinga.UpdateHost(ih)
+			defer c.IcingaClient.IcingaV1().Hosts(host.Namespace).UpdateStatus(host)
+
 			if err != nil {
 				log.Errorf("error updating icinga host '%s': %s", ih.Name, err.Error())
+				host.Status.Synced = false
 				MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 			} else {
+				host.Status.Synced = true
 				MakeEvent(c.Kubernetes, host, "host updated", "Host", false)
 			}
 			return err
@@ -119,10 +131,14 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 	} else {
 		log.Infof("creating icinga host '%s'", ih.Name)
 		err = c.Icinga.CreateHost(ih)
+		defer c.IcingaClient.IcingaV1().Hosts(host.Namespace).UpdateStatus(host)
+
 		if err != nil {
 			log.Errorf("error creating icinga host '%s': %s", ih.Name, err.Error())
+			host.Status.Synced = false
 			MakeEvent(c.Kubernetes, host, err.Error(), "Host", true)
 		} else {
+			host.Status.Synced = true
 			MakeEvent(c.Kubernetes, host, "host created", "Host", false)
 		}
 		return err
