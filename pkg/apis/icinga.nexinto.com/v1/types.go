@@ -31,6 +31,7 @@ type HostGroupList struct {
 }
 
 // +genclient
+// +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Host struct {
 	metav1.TypeMeta   `json:",inline"`
