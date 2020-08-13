@@ -1,4 +1,5 @@
 check_kubernetes
 .idea
+.vscode
 *.sh
 vendor
