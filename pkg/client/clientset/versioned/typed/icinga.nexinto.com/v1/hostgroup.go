@@ -39,6 +39,7 @@ type HostGroupsGetter interface {
 type HostGroupInterface interface {
 	Create(*v1.HostGroup) (*v1.HostGroup, error)
 	Update(*v1.HostGroup) (*v1.HostGroup, error)
+	UpdateStatus(*v1.HostGroup) (*v1.HostGroup, error)
 	Delete(name string, options *metav1.DeleteOptions) error
 	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
 	Get(name string, options metav1.GetOptions) (*v1.HostGroup, error)
@@ -126,6 +127,22 @@ func (c *hostGroups) Update(hostGroup *v1.HostGroup) (result *v1.HostGroup, err 
 		Namespace(c.ns).
 		Resource("hostgroups").
 		Name(hostGroup.Name).
+		Body(hostGroup).
+		Do().
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+
+func (c *hostGroups) UpdateStatus(hostGroup *v1.HostGroup) (result *v1.HostGroup, err error) {
+	result = &v1.HostGroup{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("hostgroups").
+		Name(hostGroup.Name).
+		SubResource("status").
 		Body(hostGroup).
 		Do().
 		Into(result)

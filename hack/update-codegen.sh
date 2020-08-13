@@ -13,7 +13,7 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 
 ( cd $CODEGEN_PKG
 
-bash ./generate-groups.sh "deepcopy,client,informer,lister" \
+GO111MODULE="off" bash ./generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/Soluto-Private/kubernetes-icinga/pkg/client github.com/Soluto-Private/kubernetes-icinga/pkg/apis \
   icinga.nexinto.com:v1 \
   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt

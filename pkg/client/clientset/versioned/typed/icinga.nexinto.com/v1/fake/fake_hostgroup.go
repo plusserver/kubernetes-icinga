@@ -100,6 +100,18 @@ func (c *FakeHostGroups) Update(hostGroup *icinganexintocomv1.HostGroup) (result
 	return obj.(*icinganexintocomv1.HostGroup), err
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeHostGroups) UpdateStatus(hostGroup *icinganexintocomv1.HostGroup) (*icinganexintocomv1.HostGroup, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(hostgroupsResource, "status", c.ns, hostGroup), &icinganexintocomv1.HostGroup{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*icinganexintocomv1.HostGroup), err
+}
+
 // Delete takes name of the hostGroup and deletes it. Returns an error if one occurs.
 func (c *FakeHostGroups) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
