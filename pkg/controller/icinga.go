@@ -176,10 +176,14 @@ func (c *Controller) CheckCreatedOrUpdated(check *icingav1.Check) error {
 			varsDiffer(oc.Vars, nc.Vars) {
 			log.Infof("updating icinga service '%s'", nc.Name)
 			err = c.Icinga.UpdateService(nc)
+			defer c.IcingaClient.IcingaV1().Checks(check.Namespace).UpdateStatus(check)
+
 			if err != nil {
 				log.Errorf("error updating icinga service '%s': %s", nc.Name, err.Error())
+				check.Status.Synced = false
 				MakeEvent(c.Kubernetes, check, err.Error(), "Check", true)
 			} else {
+				check.Status.Synced = true
 				MakeEvent(c.Kubernetes, check, "service updated", "Check", false)
 			}
 			return err
@@ -187,9 +191,13 @@ func (c *Controller) CheckCreatedOrUpdated(check *icingav1.Check) error {
 	} else {
 		log.Infof("creating icinga check '%s'", nc.Name)
 		err = c.Icinga.CreateService(nc)
+		defer c.IcingaClient.IcingaV1().Checks(check.Namespace).UpdateStatus(check)
+
 		if err != nil {
+			check.Status.Synced = false
 			MakeEvent(c.Kubernetes, check, err.Error(), "Check", true)
 		} else {
+			check.Status.Synced = true
 			MakeEvent(c.Kubernetes, check, "service created", "Check", false)
 		}
 		return err
