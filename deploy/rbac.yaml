@@ -32,8 +32,11 @@ rules:
   - icinga.nexinto.com
   resources:
   - hostgroups
+  - hostgroups/status
   - hosts
+  - hosts/status
   - checks
+  - checks/status
   verbs:
   - "*"
 - apiGroups:
