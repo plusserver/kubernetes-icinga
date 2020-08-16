@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/Nexinto/go-icinga2-client/icinga2"
+	log "github.com/sirupsen/logrus"
 
 	icingav1 "github.com/Soluto-Private/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 )
@@ -25,7 +24,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 		if hg.Name != newHg.Name || varsDiffer(hg.Vars, newHg.Vars) {
 			log.Infof("updating icinga hostgroup '%s'", newHg.Name)
 			err = c.Icinga.UpdateHostGroup(newHg)
-			defer c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).UpdateStatus(hostgroup)
+			defer updateHostGroupStatus(c, hostgroup)
 
 			if err != nil {
 				log.Errorf("error updating icinga hostgroup '%s': %s", newHg.Name, err.Error())
@@ -40,7 +39,7 @@ func (c *Controller) HostGroupCreatedOrUpdated(hostgroup *icingav1.HostGroup) er
 	} else {
 		log.Infof("creating icinga hostgroup '%s'", newHg.Name)
 		err = c.Icinga.CreateHostGroup(newHg)
-		defer c.IcingaClient.IcingaV1().HostGroups(hostgroup.Namespace).UpdateStatus(hostgroup)
+		defer updateHostGroupStatus(c, hostgroup)
 
 		if err != nil {
 			log.Errorf("error creating icinga hostgroup '%s': %s", newHg.Name, err.Error())
@@ -116,7 +115,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 			oh.NotesURL != ih.NotesURL {
 			log.Infof("updating icinga host '%s'", ih.Name)
 			err = c.Icinga.UpdateHost(ih)
-			defer c.IcingaClient.IcingaV1().Hosts(host.Namespace).UpdateStatus(host)
+			defer updateHostStatus(c, host)
 
 			if err != nil {
 				log.Errorf("error updating icinga host '%s': %s", ih.Name, err.Error())
@@ -131,7 +130,7 @@ func (c *Controller) HostCreatedOrUpdated(host *icingav1.Host) error {
 	} else {
 		log.Infof("creating icinga host '%s'", ih.Name)
 		err = c.Icinga.CreateHost(ih)
-		defer c.IcingaClient.IcingaV1().Hosts(host.Namespace).UpdateStatus(host)
+		defer updateHostStatus(c, host)
 
 		if err != nil {
 			log.Errorf("error creating icinga host '%s': %s", ih.Name, err.Error())
@@ -192,10 +191,10 @@ func (c *Controller) CheckCreatedOrUpdated(check *icingav1.Check) error {
 			varsDiffer(oc.Vars, nc.Vars) {
 			log.Infof("updating icinga service '%s'", nc.Name)
 			err = c.Icinga.UpdateService(nc)
-			defer c.IcingaClient.IcingaV1().Checks(check.Namespace).UpdateStatus(check)
+			defer updateCheckStatus(c, check)
 
 			if err != nil {
-				log.Errorf("error updating icinga service '%s': %s", nc.Name, err.Error())
+				log.Errorf("error updating icinga check '%s': %s", nc.Name, err.Error())
 				check.Status.Synced = false
 				MakeEvent(c.Kubernetes, check, err.Error(), "Check", true)
 			} else {
@@ -207,14 +206,15 @@ func (c *Controller) CheckCreatedOrUpdated(check *icingav1.Check) error {
 	} else {
 		log.Infof("creating icinga check '%s'", nc.Name)
 		err = c.Icinga.CreateService(nc)
-		defer c.IcingaClient.IcingaV1().Checks(check.Namespace).UpdateStatus(check)
+		defer updateCheckStatus(c, check)
 
 		if err != nil {
+			log.Errorf("error creating icinga check '%s': %s", nc.Name, err.Error())
 			check.Status.Synced = false
 			MakeEvent(c.Kubernetes, check, err.Error(), "Check", true)
 		} else {
 			check.Status.Synced = true
-			MakeEvent(c.Kubernetes, check, "service created", "Check", false)
+			MakeEvent(c.Kubernetes, check, "check created", "Check", false)
 		}
 		return err
 	}
@@ -250,5 +250,27 @@ func empty(a string) string {
 		return ""
 	} else {
 		return "." + a
+	}
+}
+
+func errorLogStatusUpdate(t string, name string, ns string, err error) {
+	log.Errorf("Error updating the status of the %s: %s/%s", t, ns, name, err.Error())
+}
+
+func updateHostGroupStatus(c *Controller, hg *icingav1.HostGroup) {
+	if _, err := c.IcingaClient.IcingaV1().HostGroups(hg.Namespace).UpdateStatus(hg); err != nil {
+		errorLogStatusUpdate("HostGroup", hg.Name, hg.Namespace, err)
+	}
+}
+
+func updateHostStatus(c *Controller, host *icingav1.Host) {
+	if _, err := c.IcingaClient.IcingaV1().Hosts(host.Namespace).UpdateStatus(host); err != nil {
+		errorLogStatusUpdate("Host", host.Name, host.Namespace, err)
+	}
+}
+
+func updateCheckStatus(c *Controller, check *icingav1.Check) {
+	if _, err := c.IcingaClient.IcingaV1().Checks(check.Namespace).UpdateStatus(check); err != nil {
+		errorLogStatusUpdate("Check", check.Name, check.Namespace, err)
 	}
 }
