@@ -20,7 +20,7 @@ type HostGroupSpec struct {
 }
 
 type HostGroupStatus struct {
-	Synced bool `json:"synced,omitempty"`
+	Synced bool `json:"synced"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -51,7 +51,7 @@ type HostSpec struct {
 }
 
 type HostStatus struct {
-	Synced bool `json:"synced,omitempty"`
+	Synced bool `json:"synced"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -82,7 +82,7 @@ type CheckSpec struct {
 }
 
 type CheckStatus struct {
-	Synced bool `json:"synced,omitempty"`
+	Synced bool `json:"synced"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
