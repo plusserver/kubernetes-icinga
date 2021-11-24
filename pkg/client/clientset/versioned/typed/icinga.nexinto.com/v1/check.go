@@ -19,6 +19,8 @@ limitations under the License.
 package v1
 
 import (
+	"context"
+
 	v1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 	scheme "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned/scheme"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +70,7 @@ func (c *checks) Get(name string, options meta_v1.GetOptions) (result *v1.Check,
 		Resource("checks").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -80,7 +82,7 @@ func (c *checks) List(opts meta_v1.ListOptions) (result *v1.CheckList, err error
 		Namespace(c.ns).
 		Resource("checks").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -92,7 +94,7 @@ func (c *checks) Watch(opts meta_v1.ListOptions) (watch.Interface, error) {
 		Namespace(c.ns).
 		Resource("checks").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Watch(context.Background())
 }
 
 // Create takes the representation of a check and creates it.  Returns the server's representation of the check, and an error, if there is any.
@@ -102,7 +104,7 @@ func (c *checks) Create(check *v1.Check) (result *v1.Check, err error) {
 		Namespace(c.ns).
 		Resource("checks").
 		Body(check).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -115,7 +117,7 @@ func (c *checks) Update(check *v1.Check) (result *v1.Check, err error) {
 		Resource("checks").
 		Name(check.Name).
 		Body(check).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -127,7 +129,7 @@ func (c *checks) Delete(name string, options *meta_v1.DeleteOptions) error {
 		Resource("checks").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -138,7 +140,7 @@ func (c *checks) DeleteCollection(options *meta_v1.DeleteOptions, listOptions me
 		Resource("checks").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -151,7 +153,7 @@ func (c *checks) Patch(name string, pt types.PatchType, data []byte, subresource
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }

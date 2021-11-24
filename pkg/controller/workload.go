@@ -48,7 +48,7 @@ func (c *Controller) NamespaceDeleted(namespace *corev1.Namespace) error {
 }
 
 func (c *Controller) DeploymentCreatedOrUpdated(deployment *appsv1.Deployment) error {
-	return c.processWorkload(deployment, "deploy", "deployment", "Deployment", "v1beta1")
+	return c.processWorkload(deployment, "deploy", "deployment", "Deployment", "v1")
 }
 
 func (c *Controller) DeploymentDeleted(deployment *appsv1.Deployment) error {
@@ -57,7 +57,7 @@ func (c *Controller) DeploymentDeleted(deployment *appsv1.Deployment) error {
 }
 
 func (c *Controller) DaemonSetCreatedOrUpdated(daemonset *appsv1.DaemonSet) error {
-	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet", "v1beta1")
+	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet", "v1")
 }
 
 func (c *Controller) DaemonSetDeleted(daemonset *appsv1.DaemonSet) error {
@@ -66,7 +66,7 @@ func (c *Controller) DaemonSetDeleted(daemonset *appsv1.DaemonSet) error {
 }
 
 func (c *Controller) ReplicaSetCreatedOrUpdated(replicaset *appsv1.ReplicaSet) error {
-	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet", "v1beta1")
+	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet", "v1")
 }
 
 func (c *Controller) ReplicaSetDeleted(replicaset *appsv1.ReplicaSet) error {
@@ -75,7 +75,7 @@ func (c *Controller) ReplicaSetDeleted(replicaset *appsv1.ReplicaSet) error {
 }
 
 func (c *Controller) StatefulSetCreatedOrUpdated(statefulset *appsv1.StatefulSet) error {
-	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1beta2")
+	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1")
 }
 
 func (c *Controller) StatefulSetDeleted(statefulset *appsv1.StatefulSet) error {

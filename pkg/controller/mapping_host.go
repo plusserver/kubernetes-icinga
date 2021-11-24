@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"fmt"
+
 	icingav1 "github.com/Nexinto/kubernetes-icinga/pkg/apis/icinga.nexinto.com/v1"
 )
 
@@ -15,7 +18,7 @@ func (m *HostMapping) Name() string {
 }
 
 func (m *HostMapping) MonitorCluster(c *Controller) error {
-	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get("kube-system", metav1.GetOptions{})
+	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get(context.Background(), "kube-system", metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting kube-system namespace: %s", err.Error())
 	}
@@ -54,7 +57,7 @@ func (m *HostMapping) UnmonitorNamespace(c *Controller, namespace *corev1.Namesp
 }
 
 func (m *HostMapping) MonitorNodesGroup(c *Controller) error {
-	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get("kube-system", metav1.GetOptions{})
+	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get(context.Background(), "kube-system", metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting kube-system namespace: %s", err.Error())
 	}
@@ -75,7 +78,7 @@ func (m *HostMapping) MonitorNodesGroup(c *Controller) error {
 }
 
 func (m *HostMapping) MonitorInfrastructureGroup(c *Controller) error {
-	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get("kube-system", metav1.GetOptions{})
+	kubeSystem, err := c.Kubernetes.CoreV1().Namespaces().Get(context.Background(), "kube-system", metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting kube-system namespace: %s", err.Error())
 	}
