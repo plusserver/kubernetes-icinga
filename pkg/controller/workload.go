@@ -3,9 +3,8 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -48,38 +47,38 @@ func (c *Controller) NamespaceDeleted(namespace *corev1.Namespace) error {
 	return c.Mapping.UnmonitorNamespace(c, namespace)
 }
 
-func (c *Controller) DeploymentCreatedOrUpdated(deployment *extensionsv1beta1.Deployment) error {
-	return c.processWorkload(deployment, "deploy", "deployment", "Deployment", "v1beta1")
+func (c *Controller) DeploymentCreatedOrUpdated(deployment *appsv1.Deployment) error {
+	return c.processWorkload(deployment, "deploy", "deployment", "Deployment", "v1")
 }
 
-func (c *Controller) DeploymentDeleted(deployment *extensionsv1beta1.Deployment) error {
+func (c *Controller) DeploymentDeleted(deployment *appsv1.Deployment) error {
 	log.Debugf("processing deleted deployment '%s/%s'", deployment.Namespace, deployment.Name)
 	return c.Mapping.UnmonitorWorkload(c, deployment, "deploy")
 }
 
-func (c *Controller) DaemonSetCreatedOrUpdated(daemonset *extensionsv1beta1.DaemonSet) error {
-	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet", "v1beta1")
+func (c *Controller) DaemonSetCreatedOrUpdated(daemonset *appsv1.DaemonSet) error {
+	return c.processWorkload(daemonset, "ds", "daemonset", "DaemonSet", "v1")
 }
 
-func (c *Controller) DaemonSetDeleted(daemonset *extensionsv1beta1.DaemonSet) error {
+func (c *Controller) DaemonSetDeleted(daemonset *appsv1.DaemonSet) error {
 	log.Debugf("processing deleted daemonset '%s/%s'", daemonset.Namespace, daemonset.Name)
 	return c.Mapping.UnmonitorWorkload(c, daemonset, "ds")
 }
 
-func (c *Controller) ReplicaSetCreatedOrUpdated(replicaset *extensionsv1beta1.ReplicaSet) error {
-	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet", "v1beta1")
+func (c *Controller) ReplicaSetCreatedOrUpdated(replicaset *appsv1.ReplicaSet) error {
+	return c.processWorkload(replicaset, "rs", "replicaset", "ReplicaSet", "v1")
 }
 
-func (c *Controller) ReplicaSetDeleted(replicaset *extensionsv1beta1.ReplicaSet) error {
+func (c *Controller) ReplicaSetDeleted(replicaset *appsv1.ReplicaSet) error {
 	log.Debugf("processing deleted replicaset '%s/%s'", replicaset.Namespace, replicaset.Name)
 	return c.Mapping.UnmonitorWorkload(c, replicaset, "rs")
 }
 
-func (c *Controller) StatefulSetCreatedOrUpdated(statefulset *appsv1beta2.StatefulSet) error {
-	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1beta2")
+func (c *Controller) StatefulSetCreatedOrUpdated(statefulset *appsv1.StatefulSet) error {
+	return c.processWorkload(statefulset, "statefulset", "statefulset", "StatefulSet", "v1")
 }
 
-func (c *Controller) StatefulSetDeleted(statefulset *appsv1beta2.StatefulSet) error {
+func (c *Controller) StatefulSetDeleted(statefulset *appsv1.StatefulSet) error {
 	log.Debugf("processing deleted statefulset '%s/%s'", statefulset.Namespace, statefulset.Name)
 	return c.Mapping.UnmonitorWorkload(c, statefulset, "statefulset")
 }

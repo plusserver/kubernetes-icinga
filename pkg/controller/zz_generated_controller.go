@@ -21,13 +21,9 @@ import (
 
 	corelisterv1 "k8s.io/client-go/listers/core/v1"
 
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 
-	extensionslisterv1beta1 "k8s.io/client-go/listers/extensions/v1beta1"
-
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
-
-	appslisterv1beta2 "k8s.io/client-go/listers/apps/v1beta2"
+	appslisterv1 "k8s.io/client-go/listers/apps/v1"
 
 	icingaclientset "github.com/Nexinto/kubernetes-icinga/pkg/client/clientset/versioned"
 
@@ -54,19 +50,19 @@ type Controller struct {
 	NamespaceSynced cache.InformerSynced
 
 	DeploymentQueue  workqueue.RateLimitingInterface
-	DeploymentLister extensionslisterv1beta1.DeploymentLister
+	DeploymentLister appslisterv1.DeploymentLister
 	DeploymentSynced cache.InformerSynced
 
 	DaemonSetQueue  workqueue.RateLimitingInterface
-	DaemonSetLister extensionslisterv1beta1.DaemonSetLister
+	DaemonSetLister appslisterv1.DaemonSetLister
 	DaemonSetSynced cache.InformerSynced
 
 	ReplicaSetQueue  workqueue.RateLimitingInterface
-	ReplicaSetLister extensionslisterv1beta1.ReplicaSetLister
+	ReplicaSetLister appslisterv1.ReplicaSetLister
 	ReplicaSetSynced cache.InformerSynced
 
 	StatefulSetQueue  workqueue.RateLimitingInterface
-	StatefulSetLister appslisterv1beta2.StatefulSetLister
+	StatefulSetLister appslisterv1.StatefulSetLister
 	StatefulSetSynced cache.InformerSynced
 
 	IcingaClient  icingaclientset.Interface
@@ -230,7 +226,7 @@ func (c *Controller) Initialize() {
 		},
 	})
 
-	DeploymentInformer := c.KubernetesFactory.Extensions().V1beta1().Deployments()
+	DeploymentInformer := c.KubernetesFactory.Apps().V1().Deployments()
 	DeploymentQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	c.DeploymentQueue = DeploymentQueue
 	c.DeploymentLister = DeploymentInformer.Lister()
@@ -251,7 +247,7 @@ func (c *Controller) Initialize() {
 		},
 
 		DeleteFunc: func(obj interface{}) {
-			o, ok := obj.(*extensionsv1beta1.Deployment)
+			o, ok := obj.(*appsv1.Deployment)
 
 			if !ok {
 				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -259,7 +255,7 @@ func (c *Controller) Initialize() {
 					log.Errorf("couldn't get object from tombstone %+v", obj)
 					return
 				}
-				o, ok = tombstone.Obj.(*extensionsv1beta1.Deployment)
+				o, ok = tombstone.Obj.(*appsv1.Deployment)
 				if !ok {
 					log.Errorf("tombstone contained object that is not a Deployment %+v", obj)
 					return
@@ -274,7 +270,7 @@ func (c *Controller) Initialize() {
 		},
 	})
 
-	DaemonSetInformer := c.KubernetesFactory.Extensions().V1beta1().DaemonSets()
+	DaemonSetInformer := c.KubernetesFactory.Apps().V1().DaemonSets()
 	DaemonSetQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	c.DaemonSetQueue = DaemonSetQueue
 	c.DaemonSetLister = DaemonSetInformer.Lister()
@@ -295,7 +291,7 @@ func (c *Controller) Initialize() {
 		},
 
 		DeleteFunc: func(obj interface{}) {
-			o, ok := obj.(*extensionsv1beta1.DaemonSet)
+			o, ok := obj.(*appsv1.DaemonSet)
 
 			if !ok {
 				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -303,7 +299,7 @@ func (c *Controller) Initialize() {
 					log.Errorf("couldn't get object from tombstone %+v", obj)
 					return
 				}
-				o, ok = tombstone.Obj.(*extensionsv1beta1.DaemonSet)
+				o, ok = tombstone.Obj.(*appsv1.DaemonSet)
 				if !ok {
 					log.Errorf("tombstone contained object that is not a DaemonSet %+v", obj)
 					return
@@ -318,7 +314,7 @@ func (c *Controller) Initialize() {
 		},
 	})
 
-	ReplicaSetInformer := c.KubernetesFactory.Extensions().V1beta1().ReplicaSets()
+	ReplicaSetInformer := c.KubernetesFactory.Apps().V1().ReplicaSets()
 	ReplicaSetQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	c.ReplicaSetQueue = ReplicaSetQueue
 	c.ReplicaSetLister = ReplicaSetInformer.Lister()
@@ -339,7 +335,7 @@ func (c *Controller) Initialize() {
 		},
 
 		DeleteFunc: func(obj interface{}) {
-			o, ok := obj.(*extensionsv1beta1.ReplicaSet)
+			o, ok := obj.(*appsv1.ReplicaSet)
 
 			if !ok {
 				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -347,7 +343,7 @@ func (c *Controller) Initialize() {
 					log.Errorf("couldn't get object from tombstone %+v", obj)
 					return
 				}
-				o, ok = tombstone.Obj.(*extensionsv1beta1.ReplicaSet)
+				o, ok = tombstone.Obj.(*appsv1.ReplicaSet)
 				if !ok {
 					log.Errorf("tombstone contained object that is not a ReplicaSet %+v", obj)
 					return
@@ -362,7 +358,7 @@ func (c *Controller) Initialize() {
 		},
 	})
 
-	StatefulSetInformer := c.KubernetesFactory.Apps().V1beta2().StatefulSets()
+	StatefulSetInformer := c.KubernetesFactory.Apps().V1().StatefulSets()
 	StatefulSetQueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	c.StatefulSetQueue = StatefulSetQueue
 	c.StatefulSetLister = StatefulSetInformer.Lister()
@@ -383,7 +379,7 @@ func (c *Controller) Initialize() {
 		},
 
 		DeleteFunc: func(obj interface{}) {
-			o, ok := obj.(*appsv1beta2.StatefulSet)
+			o, ok := obj.(*appsv1.StatefulSet)
 
 			if !ok {
 				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -391,7 +387,7 @@ func (c *Controller) Initialize() {
 					log.Errorf("couldn't get object from tombstone %+v", obj)
 					return
 				}
-				o, ok = tombstone.Obj.(*appsv1beta2.StatefulSet)
+				o, ok = tombstone.Obj.(*appsv1.StatefulSet)
 				if !ok {
 					log.Errorf("tombstone contained object that is not a StatefulSet %+v", obj)
 					return

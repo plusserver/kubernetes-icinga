@@ -11,9 +11,8 @@ import (
 
 	"github.com/Nexinto/go-icinga2-client/icinga2"
 
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
@@ -295,7 +294,7 @@ func (s *KubernetesIcingaTestSuite) TestDeployment() {
 	a := assert.New(s.T())
 	c := s.Controller
 
-	_, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+	_, err := c.Kubernetes.AppsV1().Deployments("default").Create(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mydeploy",
 			Annotations: map[string]string{
@@ -309,7 +308,7 @@ func (s *KubernetesIcingaTestSuite) TestDeployment() {
 		return
 	}
 
-	_, err = c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+	_, err = c.Kubernetes.AppsV1().Deployments("default").Create(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "controlled",
 			OwnerReferences: []metav1.OwnerReference{{
@@ -323,7 +322,7 @@ func (s *KubernetesIcingaTestSuite) TestDeployment() {
 		return
 	}
 
-	_, err = c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+	_, err = c.Kubernetes.AppsV1().Deployments("default").Create(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "unmonitored",
 			Annotations: map[string]string{
@@ -362,7 +361,7 @@ func (s *KubernetesIcingaTestSuite) TestDeployment() {
 	a.Equal("default", host.GetVars()[VarNamespace])
 	a.Equal("default/deploy-mydeploy", host.GetVars()[VarOwner])
 
-	if err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Delete("mydeploy", &metav1.DeleteOptions{}); !a.Nil(err) {
+	if err := c.Kubernetes.AppsV1().Deployments("default").Delete("mydeploy", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
 	}
 
@@ -379,7 +378,7 @@ func (s *KubernetesIcingaTestSuite) TestDaemonSet() {
 	a := assert.New(s.T())
 	c := s.Controller
 
-	_, err := c.Kubernetes.ExtensionsV1beta1().DaemonSets("default").Create(&extensionsv1beta1.DaemonSet{
+	_, err := c.Kubernetes.AppsV1().DaemonSets("default").Create(&appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "myds",
 		},
@@ -406,7 +405,7 @@ func (s *KubernetesIcingaTestSuite) TestDaemonSet() {
 	a.Equal("default", host.GetVars()[VarNamespace])
 	a.Equal("default/ds-myds", host.GetVars()[VarOwner])
 
-	if err := c.Kubernetes.ExtensionsV1beta1().DaemonSets("default").Delete("myds", &metav1.DeleteOptions{}); !a.Nil(err) {
+	if err := c.Kubernetes.AppsV1().DaemonSets("default").Delete("myds", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
 	}
 
@@ -423,7 +422,7 @@ func (s *KubernetesIcingaTestSuite) TestStatefulSet() {
 	a := assert.New(s.T())
 	c := s.Controller
 
-	_, err := c.Kubernetes.AppsV1beta2().StatefulSets("default").Create(&appsv1beta2.StatefulSet{
+	_, err := c.Kubernetes.AppsV1().StatefulSets("default").Create(&appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mystate",
 		},
@@ -450,7 +449,7 @@ func (s *KubernetesIcingaTestSuite) TestStatefulSet() {
 	a.Equal("default", host.GetVars()[VarNamespace])
 	a.Equal("default/statefulset-mystate", host.GetVars()[VarOwner])
 
-	if err := c.Kubernetes.AppsV1beta2().StatefulSets("default").Delete("mystate", &metav1.DeleteOptions{}); !a.Nil(err) {
+	if err := c.Kubernetes.AppsV1().StatefulSets("default").Delete("mystate", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
 	}
 
@@ -467,7 +466,7 @@ func (s *KubernetesIcingaTestSuite) TestReplicaSet() {
 	a := assert.New(s.T())
 	c := s.Controller
 
-	_, err := c.Kubernetes.ExtensionsV1beta1().ReplicaSets("default").Create(&extensionsv1beta1.ReplicaSet{
+	_, err := c.Kubernetes.AppsV1().ReplicaSets("default").Create(&appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "myreplica",
 			Annotations: map[string]string{
@@ -480,7 +479,7 @@ func (s *KubernetesIcingaTestSuite) TestReplicaSet() {
 		return
 	}
 
-	_, err = c.Kubernetes.ExtensionsV1beta1().ReplicaSets("default").Create(&extensionsv1beta1.ReplicaSet{
+	_, err = c.Kubernetes.AppsV1().ReplicaSets("default").Create(&appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "controlled",
 			OwnerReferences: []metav1.OwnerReference{{
@@ -512,7 +511,7 @@ func (s *KubernetesIcingaTestSuite) TestReplicaSet() {
 	a.Equal("default", host.GetVars()[VarNamespace])
 	a.Equal("default/rs-myreplica", host.GetVars()[VarOwner])
 
-	if err := c.Kubernetes.ExtensionsV1beta1().ReplicaSets("default").Delete("myreplica", &metav1.DeleteOptions{}); !a.Nil(err) {
+	if err := c.Kubernetes.AppsV1().ReplicaSets("default").Delete("myreplica", &metav1.DeleteOptions{}); !a.Nil(err) {
 		return
 	}
 
@@ -529,7 +528,7 @@ func (s *KubernetesIcingaTestSuite) TestChangeNotes() {
 	a := assert.New(s.T())
 	c := s.Controller
 
-	_, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+	_, err := c.Kubernetes.AppsV1().Deployments("default").Create(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mydeploy",
 			Annotations: map[string]string{
@@ -570,7 +569,7 @@ func (s *KubernetesIcingaTestSuite) TestChangeNotes() {
 
 	d.Annotations[AnnNotes] = "an even nicer deployment"
 	d.Annotations[AnnNotesURL] = "http://site.com/docsv2"
-	_, err = c.Kubernetes.ExtensionsV1beta1().Deployments("default").Update(d)
+	_, err = c.Kubernetes.AppsV1().Deployments("default").Update(d)
 	if !a.Nil(err) {
 		return
 	}
@@ -755,7 +754,7 @@ func (s *KubernetesIcingaTestSuite) TestCRHousekeeping() {
 
 	log.SetLevel(log.DebugLevel)
 
-	if _, err := c.Kubernetes.ExtensionsV1beta1().Deployments("default").Create(&extensionsv1beta1.Deployment{
+	if _, err := c.Kubernetes.AppsV1().Deployments("default").Create(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "mydeploy"}}); !a.Nil(err) {
 		return
 	}

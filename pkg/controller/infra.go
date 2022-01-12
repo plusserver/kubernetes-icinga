@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	log "github.com/sirupsen/logrus"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +14,7 @@ func (c *Controller) RefreshComponentStatutes() {
 	for {
 		// Have to do it manually as they cannot be watched.
 
-		componentstatuses, err := c.Kubernetes.CoreV1().ComponentStatuses().List(metav1.ListOptions{})
+		componentstatuses, err := c.Kubernetes.CoreV1().ComponentStatuses().List(context.Background(), metav1.ListOptions{})
 
 		if err != nil {
 			log.Errorf("error listing componentstatuses: %s", err.Error())

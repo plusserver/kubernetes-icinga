@@ -1,8 +1,10 @@
 package main
 
 import (
-	"k8s.io/apimachinery/pkg/api/errors"
+	"context"
 	"reflect"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	log "github.com/sirupsen/logrus"
 
@@ -66,7 +68,7 @@ func (c *Controller) monitored(o metav1.Object) bool {
 		return false
 	}
 	if ns := o.GetNamespace(); ns != "" {
-		namespace, err := c.Kubernetes.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+		namespace, err := c.Kubernetes.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("error getting namespace '%s': %s", ns, err.Error())
 			return false
@@ -107,7 +109,7 @@ func MakeEvent(kube kubernetes.Interface, o metav1.Object, message, kind string,
 		Type:           t,
 	}
 
-	_, err := kube.CoreV1().Events(o.GetNamespace()).Create(event)
+	_, err := kube.CoreV1().Events(o.GetNamespace()).Create(context.Background(), event, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Errorf("error creating event for %s/%s with message '%s': %s", o.GetNamespace(), o.GetName(), message, err.Error())
 	}
